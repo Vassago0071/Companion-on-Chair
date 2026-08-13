@@ -199,14 +199,16 @@ body {
 }
 
 /* South-Park-inspired cutout look: bold outlines, flat shapes */
-.companion-svg .ol {
+.companion-svg .ol,
+.teacher-svg .ol {
   stroke: #18110b;
   stroke-width: 4;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 
-.companion-svg .mouth {
+.companion-svg .mouth,
+.teacher-svg .mouth {
   stroke: #18110b;
   stroke-width: 3;
   fill: none;
@@ -225,7 +227,9 @@ body {
 }
 
 .companion-svg .glasses circle,
-.companion-svg .glasses line {
+.companion-svg .glasses line,
+.teacher-svg .glasses circle,
+.teacher-svg .glasses line {
   fill: none;
   stroke: #18110b;
   stroke-width: 3;
@@ -380,6 +384,78 @@ body {
   justify-content: space-between;
   gap: 10px;
   margin-top: 8px;
+}
+
+/* ----------------------------- teacher avatar ----------------------------- */
+.teacher-avatar-widget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto 16px;
+}
+
+.teacher-avatar-bust {
+  width: 110px;
+  height: 121px;
+}
+
+.teacher-avatar-bust.small {
+  width: 60px;
+  height: 66px;
+}
+
+.teacher-avatar-bust svg,
+.teacher-avatar-preview svg,
+.teacher-avatar-option svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.student-hosted-by {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 auto 12px;
+  color: var(--brown);
+  font-size: 0.9rem;
+}
+
+.teacher-avatar-preview {
+  width: 130px;
+  height: 143px;
+  margin: 0 auto 16px;
+}
+
+.teacher-avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.teacher-avatar-option {
+  border: 2px solid var(--cream-2);
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.teacher-avatar-option span {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--brown);
+}
+
+.teacher-avatar-option.active {
+  border-color: var(--accent);
+  background: var(--cream-2);
 }
 
 /* -------------------------------- timer panel ----------------------------- */

@@ -884,3 +884,132 @@ function avatarSVG(companion, state, custom) {
     </g>
   </svg>`;
 }
+
+/* ------------------------------------------------------------------------
+ * Teacher avatars: a small, separate roster used only for a teacher's own
+ * on-screen identity in Classroom Mode (not the student companion roster).
+ * Four original characters -- two coded male, two coded female -- in a more
+ * serious/professional look (blazer, tie or bow, tidy posture) than the
+ * playful student roster. Rendered as a portrait bust, not a sitting
+ * full-body companion, since a teacher doesn't "focus" through this avatar
+ * the way a student's companion does.
+ * ------------------------------------------------------------------------ */
+const TEACHER_AVATARS = [
+  {
+    id: "teacher-alden",
+    name: "Mr. Alden",
+    gender: "male",
+    colors: { blazer: "#2b3a55", accent: "#c9432f" },
+  },
+  {
+    id: "teacher-osei",
+    name: "Mr. Osei",
+    gender: "male",
+    colors: { blazer: "#4a2f1c", accent: "#3a7bd5" },
+  },
+  {
+    id: "teacher-marlowe",
+    name: "Ms. Marlowe",
+    gender: "female",
+    colors: { blazer: "#6b2f4a", accent: "#c9432f" },
+  },
+  {
+    id: "teacher-quintero",
+    name: "Ms. Quintero",
+    gender: "female",
+    colors: { blazer: "#2f5c4a", accent: "#e8c873" },
+  },
+];
+
+function getTeacherAvatar(id) {
+  return TEACHER_AVATARS.find((t) => t.id === id) || TEACHER_AVATARS[0];
+}
+
+const SKIN_TONES = [
+  { id: "light", label: "Light", color: "#f2c9a0" },
+  { id: "fair", label: "Fair", color: "#e8b48a" },
+  { id: "medium", label: "Medium", color: "#c98f5e" },
+  { id: "tan", label: "Tan", color: "#a8703f" },
+  { id: "deep", label: "Deep", color: "#6b4226" },
+];
+
+/* Hair color for teacher avatars only -- the student/companion roster
+ * intentionally has no separate hair color option (character color already
+ * covers that there). */
+const HAIR_COLORS = [
+  { id: "brown", label: "Brown", color: "#5b3a22" },
+  { id: "black", label: "Black", color: "#221a15" },
+  { id: "blonde", label: "Blonde", color: "#e8c873" },
+  { id: "red", label: "Red", color: "#b5482f" },
+  { id: "gray", label: "Gray", color: "#a8a29b" },
+  { id: "white", label: "White", color: "#e8e6e2" },
+];
+
+const TEACHER_HAIR_STYLES = [
+  {
+    id: "short-neat",
+    label: "Short & Neat",
+    render: (c) => `<path class="ol" d="M56 78 Q56 34 100 32 Q144 34 144 78 Q144 58 100 54 Q56 58 56 78 Z" fill="${c}"/>`,
+  },
+  {
+    id: "side-part",
+    label: "Side Part",
+    render: (c) =>
+      `<path class="ol" d="M56 78 Q56 32 100 30 Q146 32 146 78 Q146 56 108 50 Q76 46 56 62 Z" fill="${c}"/><line x1="92" y1="34" x2="86" y2="54" stroke="#18110b" stroke-width="1.5"/>`,
+  },
+  {
+    id: "bun",
+    label: "Neat Bun",
+    render: (c) =>
+      `<path class="ol" d="M58 78 Q58 36 100 34 Q142 36 142 78 Q142 60 100 56 Q58 60 58 78 Z" fill="${c}"/><circle class="ol" cx="100" cy="28" r="15" fill="${c}"/>`,
+  },
+  {
+    id: "clean-cut",
+    label: "Clean Cut",
+    render: (c) =>
+      `<path class="ol" d="M60 74 Q62 64 72 60 M140 74 Q138 64 128 60" stroke="${c}" stroke-width="7" fill="none" stroke-linecap="round"/>`,
+  },
+];
+
+function defaultTeacherCustomization() {
+  return { ageId: "adult", hairStyleId: "short-neat", hairColorId: "brown", skinToneId: "medium" };
+}
+
+/** Renders a teacher's portrait bust. custom: see defaultTeacherCustomization(). */
+function teacherSVG(teacher, custom) {
+  const cust = Object.assign(defaultTeacherCustomization(), custom || {});
+  const skin = (SKIN_TONES.find((s) => s.id === cust.skinToneId) || SKIN_TONES[2]).color;
+  const hairColor = (HAIR_COLORS.find((h) => h.id === cust.hairColorId) || HAIR_COLORS[0]).color;
+  const hairStyle = TEACHER_HAIR_STYLES.find((h) => h.id === cust.hairStyleId) || TEACHER_HAIR_STYLES[0];
+
+  const isElder = cust.ageId === "elder";
+  const isYoung = cust.ageId === "young";
+  const headScale = isYoung ? 1.06 : isElder ? 1.02 : 1;
+
+  const glasses = isElder
+    ? `<g class="glasses"><circle cx="82" cy="82" r="16"/><circle cx="118" cy="82" r="16"/><line x1="98" y1="80" x2="102" y2="80"/></g>`
+    : "";
+  const blush = isYoung ? `<circle cx="70" cy="98" r="7" fill="#ffb3c0" opacity="0.5"/><circle cx="130" cy="98" r="7" fill="#ffb3c0" opacity="0.5"/>` : "";
+
+  const neckwear =
+    teacher.gender === "male"
+      ? `<path class="ol" d="M92 140 L108 140 L112 156 L100 186 L88 156 Z" fill="${teacher.colors.accent}"/>`
+      : `<path class="ol" d="M100 150 L88 142 L88 158 Z" fill="${teacher.colors.accent}"/><path class="ol" d="M100 150 L112 142 L112 158 Z" fill="${teacher.colors.accent}"/><circle class="ol" cx="100" cy="150" r="4" fill="${teacher.colors.accent}"/>`;
+
+  return `
+  <svg viewBox="0 0 200 220" class="teacher-svg" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(100 110) scale(${headScale}) translate(-100 -110)">
+      <path class="ol" d="M30 220 Q30 150 70 140 L130 140 Q170 150 170 220 Z" fill="${teacher.colors.blazer}"/>
+      <rect x="85" y="120" width="30" height="30" fill="${skin}"/>
+      <path class="ol" d="M78 150 L100 168 L122 150 L128 158 L100 182 L72 158 Z" fill="#f4ede0"/>
+      ${neckwear}
+      <circle class="ol" cx="100" cy="85" r="44" fill="${skin}"/>
+      ${hairStyle.render(hairColor)}
+      ${blush}
+      <ellipse cx="82" cy="82" rx="5" ry="6" fill="#18110b"/>
+      <ellipse cx="118" cy="82" rx="5" ry="6" fill="#18110b"/>
+      <path class="mouth" d="M86 104 Q100 112 114 104"/>
+      ${glasses}
+    </g>
+  </svg>`;
+}

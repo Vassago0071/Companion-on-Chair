@@ -134,6 +134,30 @@ function generateClassCode() {
   return code;
 }
 
+const TEACHER_PROFILE_KEY = "focusCompanion.teacherProfile.v1";
+
+function loadTeacherProfile() {
+  try {
+    const raw = localStorage.getItem(TEACHER_PROFILE_KEY);
+    if (!raw) return { avatarId: TEACHER_AVATARS[0].id, ...defaultTeacherCustomization() };
+    return { avatarId: TEACHER_AVATARS[0].id, ...defaultTeacherCustomization(), ...JSON.parse(raw) };
+  } catch (e) {
+    return { avatarId: TEACHER_AVATARS[0].id, ...defaultTeacherCustomization() };
+  }
+}
+
+function saveTeacherProfileLocally(profile) {
+  localStorage.setItem(TEACHER_PROFILE_KEY, JSON.stringify(profile));
+}
+
+/* Persists the teacher's chosen avatar to THIS class's doc (so students see
+ * it via the class doc they're already listening to) and remembers it
+ * locally so it carries forward as the default for the next class hosted. */
+async function updateTeacherProfileOnClass(classId, profile) {
+  saveTeacherProfileLocally(profile);
+  await db.collection("classes").doc(classId).update({ teacherProfile: profile });
+}
+
 async function createClassInFirestore(className) {
   if (!isSignedInTeacher()) throw new Error("Sign in first, then host a class.");
   const uid = auth.currentUser.uid;
@@ -144,6 +168,7 @@ async function createClassInFirestore(className) {
     teacherUid: uid,
     active: true,
     background: "classic",
+    teacherProfile: loadTeacherProfile(),
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
   return { classId: ref.id, code };
@@ -526,6 +551,69 @@ function refreshScoreModalIfOpen(students) {
   classroomEl("score-total-points").textContent = student.points || 0;
 }
 
+/* --------------------------- teacher avatar UI --------------------------- */
+
+function renderTeacherProfileBust(containerId, nameContainerId, profile) {
+  const wrap = classroomEl(containerId);
+  if (!wrap) return;
+  if (!profile) {
+    wrap.innerHTML = "";
+    if (nameContainerId) classroomEl(nameContainerId).textContent = "";
+    return;
+  }
+  const avatar = getTeacherAvatar(profile.avatarId);
+  wrap.innerHTML = teacherSVG(avatar, profile);
+  if (nameContainerId) classroomEl(nameContainerId).textContent = avatar.name;
+}
+
+function openTeacherAvatarModal(classId, currentProfile) {
+  editingTeacherProfileClassId = classId;
+  editingTeacherProfile = { ...loadTeacherProfile(), ...(currentProfile || {}) };
+  renderTeacherAvatarPicker();
+  openModal("modal-teacher-avatar");
+}
+
+function renderTeacherAvatarPicker() {
+  const grid = classroomEl("teacher-avatar-grid");
+  grid.innerHTML = "";
+  TEACHER_AVATARS.forEach((t) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "teacher-avatar-option" + (editingTeacherProfile.avatarId === t.id ? " active" : "");
+    btn.innerHTML = `${teacherSVG(t, editingTeacherProfile)}<span>${t.name}</span>`;
+    btn.addEventListener("click", () => {
+      editingTeacherProfile.avatarId = t.id;
+      renderTeacherAvatarPicker();
+    });
+    grid.appendChild(btn);
+  });
+  classroomEl("teacher-avatar-preview").innerHTML = teacherSVG(getTeacherAvatar(editingTeacherProfile.avatarId), editingTeacherProfile);
+  renderTeacherOptionRow("teacher-opt-age", AGES, "ageId", (a) => a.label);
+  renderTeacherOptionRow("teacher-opt-hairstyle", TEACHER_HAIR_STYLES, "hairStyleId", (h) => h.label);
+  renderTeacherOptionRow("teacher-opt-haircolor", HAIR_COLORS, "hairColorId", (h) => h.label);
+  renderTeacherOptionRow("teacher-opt-skintone", SKIN_TONES, "skinToneId", (s) => s.label);
+}
+
+function renderTeacherOptionRow(containerId, options, key, formatLabel) {
+  const wrap = classroomEl(containerId);
+  wrap.innerHTML = "";
+  options.forEach((opt) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "swatch-btn" + (editingTeacherProfile[key] === opt.id ? " active" : "");
+    if (opt.color) {
+      btn.classList.add("swatch-color");
+      btn.style.setProperty("--swatch-color", opt.color);
+    }
+    btn.textContent = formatLabel(opt);
+    btn.addEventListener("click", () => {
+      editingTeacherProfile[key] = opt.id;
+      renderTeacherAvatarPicker();
+    });
+    wrap.appendChild(btn);
+  });
+}
+
 function applyClassroomBackground(screenId, themeId) {
   const node = classroomEl(screenId);
   if (!node) return;
@@ -602,6 +690,9 @@ function stopClassTimerTicking() {
 
 /* Lesson materials rendering. */
 let currentLessonData = null;
+let currentTeacherProfileData = null;
+let editingTeacherProfile = null;
+let editingTeacherProfileClassId = null;
 
 function renderLessonFileList(container, files, { isTeacher, classId }) {
   if (!container) return;
@@ -664,6 +755,8 @@ function openTeacherDashboard(classId, className, code) {
     renderClassTimerDisplays();
     currentLessonData = classData.lesson || { notes: "", files: [] };
     renderTeacherLessonPanel(classId);
+    currentTeacherProfileData = classData.teacherProfile || null;
+    renderTeacherProfileBust("teacher-avatar-bust", null, currentTeacherProfileData);
   });
   startClassTimerTicking();
 }
@@ -687,6 +780,7 @@ function openStudentDashboard(classId, className, myUid) {
     renderClassTimerDisplays();
     currentLessonData = classData.lesson || { notes: "", files: [] };
     renderStudentLessonPanel(classId);
+    renderTeacherProfileBust("student-teacher-avatar-bust", "student-teacher-name", classData.teacherProfile || null);
   });
   startClassTimerTicking();
 }
@@ -987,6 +1081,18 @@ function wireClassroomEvents() {
   });
   classroomEl("score-bonus-give-1").addEventListener("click", () => giveBonus(1));
   classroomEl("score-bonus-give-5").addEventListener("click", () => giveBonus(5));
+
+  classroomEl("btn-change-teacher-avatar").addEventListener("click", () => {
+    if (!classroomSession) return;
+    openTeacherAvatarModal(classroomSession.classId, currentTeacherProfileData);
+  });
+  classroomEl("teacher-avatar-close").addEventListener("click", () => closeModal("modal-teacher-avatar"));
+  classroomEl("teacher-avatar-save").addEventListener("click", () => {
+    updateTeacherProfileOnClass(editingTeacherProfileClassId, editingTeacherProfile).catch((err) => {
+      alert("Could not save your avatar: " + err.message);
+    });
+    closeModal("modal-teacher-avatar");
+  });
 
   classroomEl("btn-save-lesson-notes").addEventListener("click", () => {
     if (!classroomSession) return;

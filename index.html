@@ -169,6 +169,10 @@
   <!-- ===================== CLASSROOM: TEACHER DASHBOARD ===================== -->
   <section id="screen-classroom-teacher" class="screen hidden">
     <h1 id="teacher-class-name">Class</h1>
+    <div class="teacher-avatar-widget">
+      <div class="teacher-avatar-bust" id="teacher-avatar-bust"></div>
+      <button class="ctrl-btn" id="btn-change-teacher-avatar">Change My Avatar</button>
+    </div>
     <p class="subtitle">Share this code with your students:</p>
     <div class="class-code-display" id="teacher-class-code">------</div>
     <div class="theme-picker-wrap">
@@ -214,6 +218,10 @@
   <!-- ===================== CLASSROOM: STUDENT DASHBOARD ===================== -->
   <section id="screen-classroom-student" class="screen hidden">
     <h1 id="student-class-name">Class</h1>
+    <div class="student-hosted-by">
+      <div class="teacher-avatar-bust small" id="student-teacher-avatar-bust"></div>
+      <span>Hosted by <strong id="student-teacher-name"></strong></span>
+    </div>
     <div class="class-timer-display student-class-timer" id="student-class-timer-display"></div>
     <div class="student-points-banner">
       <span>Your points: <strong id="student-points">0</strong> 🏅</span>
@@ -326,6 +334,38 @@
     </div>
     <div id="score-bonus-log" class="score-bonus-log"></div>
     <div class="score-total">Total: <span id="score-total-points">0</span> 🏅</div>
+  </div>
+</div>
+
+<!-- ===================== TEACHER AVATAR MODAL ===================== -->
+<div class="modal-backdrop hidden" id="modal-teacher-avatar">
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <h2>Your Teacher Avatar</h2>
+      <button class="modal-close" id="teacher-avatar-close">✕</button>
+    </div>
+    <p class="subtitle">Shown to your students on their class dashboard.</p>
+    <div class="teacher-avatar-preview" id="teacher-avatar-preview"></div>
+    <div class="teacher-avatar-grid" id="teacher-avatar-grid"></div>
+    <div class="control-group">
+      <span class="control-label">Age</span>
+      <div class="swatch-row" id="teacher-opt-age"></div>
+    </div>
+    <div class="control-group">
+      <span class="control-label">Hair Style</span>
+      <div class="swatch-row" id="teacher-opt-hairstyle"></div>
+    </div>
+    <div class="control-group">
+      <span class="control-label">Hair Color</span>
+      <div class="swatch-row" id="teacher-opt-haircolor"></div>
+    </div>
+    <div class="control-group">
+      <span class="control-label">Skin Color</span>
+      <div class="swatch-row" id="teacher-opt-skintone"></div>
+    </div>
+    <div class="customize-actions">
+      <button class="ctrl-btn primary" id="teacher-avatar-save">Save Avatar</button>
+    </div>
   </div>
 </div>
 

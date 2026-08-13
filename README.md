@@ -71,6 +71,11 @@ python3 -m http.server 8000
   type notes/homework and upload files (PPTs, PDFs, images, docs) that every
   student sees live on their dashboard, with a direct download link for each
   file.
+  The teacher also has their own identity: a **Teacher Avatar** picked from
+  4 original professional characters (2 coded male, 2 coded female), with
+  age, hair style, hair color, and skin color options, shown to students as
+  "Hosted by ..." on their class dashboard. The choice carries forward as
+  the default for the next class hosted.
   Requires a Firebase project to sync across devices; see "Classroom Mode
   setup" below.
 - Everything else persists in `localStorage` — no backend required.
