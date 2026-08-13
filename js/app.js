@@ -37,6 +37,7 @@ const defaultState = () => ({
   tasks: [],
   activeTaskId: null,
   ownedDecor: [],
+  ownedAccessories: [],
   customizations: {},
 });
 
@@ -427,6 +428,62 @@ function buyDecor(item) {
   renderShop();
 }
 
+/* Accessories tab of the personal Shop -- same ACCESSORY_CATALOG the class
+ * shop uses, but bought with fish and equipped onto whichever companion is
+ * currently active (state.companionId), one item per slot. */
+function renderShopAccessories() {
+  const grid = el("shop-accessories-grid");
+  const owned = state.ownedAccessories || [];
+  const equipped = state.companionId ? getCustomization(state.companionId).accessories || {} : {};
+  grid.innerHTML = "";
+  ACCESSORY_CATALOG.forEach((item) => {
+    const isOwned = owned.includes(item.id);
+    const isEquipped = equipped[item.slot] === item.id;
+    const card = document.createElement("div");
+    card.className = "shop-card" + (isOwned ? " owned" : "") + (isEquipped ? " equipped" : "");
+    card.innerHTML = `
+      <div class="shop-icon">${item.icon}</div>
+      <div class="shop-name">${item.name}</div>
+      <div class="shop-price">${isOwned ? (isEquipped ? "Equipped" : "Owned") : `🐟 ${item.price}`}</div>
+      <button class="ctrl-btn ${isOwned && !isEquipped ? "primary" : ""}" ${
+      isEquipped || !state.companionId ? "disabled" : ""
+    }>${isOwned ? (isEquipped ? "Equipped" : "Wear") : "Buy"}</button>
+    `;
+    if (!isEquipped && state.companionId) {
+      card.querySelector("button").addEventListener("click", () => buyOrEquipAccessory(item));
+    }
+    grid.appendChild(card);
+  });
+}
+
+function buyOrEquipAccessory(item) {
+  const owned = state.ownedAccessories || [];
+  if (!owned.includes(item.id)) {
+    if (state.fish < item.price) return;
+    state.fish -= item.price;
+    owned.push(item.id);
+    state.ownedAccessories = owned;
+  }
+  const merged = getCustomization(state.companionId);
+  merged.accessories = { ...merged.accessories, [item.slot]: item.id };
+  state.customizations[state.companionId] = merged;
+  saveState();
+  renderTopbar();
+  renderChair();
+  renderShopAccessories();
+  if (customizeTargetId === state.companionId) {
+    draftCustomization = getCustomization(state.companionId);
+    renderCustomizePreview();
+  }
+}
+
+function switchPersonalShopTab(tab) {
+  el("shop-grid").classList.toggle("hidden", tab !== "decor");
+  el("shop-accessories-grid").classList.toggle("hidden", tab !== "accessories");
+  el("shop-tab-decor").classList.toggle("active", tab === "decor");
+  el("shop-tab-accessories").classList.toggle("active", tab === "accessories");
+}
+
 /* -------------------------------- tasks UI ------------------------------- */
 
 function renderTasks() {
@@ -537,9 +594,13 @@ function wireEvents() {
 
   el("btn-shop").addEventListener("click", () => {
     renderShop();
+    renderShopAccessories();
+    switchPersonalShopTab("decor");
     openModal("modal-shop");
   });
   el("shop-close").addEventListener("click", () => closeModal("modal-shop"));
+  el("shop-tab-decor").addEventListener("click", () => switchPersonalShopTab("decor"));
+  el("shop-tab-accessories").addEventListener("click", () => switchPersonalShopTab("accessories"));
 
   el("btn-tasks").addEventListener("click", () => {
     renderTasks();
@@ -575,6 +636,8 @@ function wireEvents() {
 
   el("btn-fish").addEventListener("click", () => {
     renderShop();
+    renderShopAccessories();
+    switchPersonalShopTab("decor");
     openModal("modal-shop");
   });
 }

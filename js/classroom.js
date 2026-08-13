@@ -145,14 +145,18 @@ async function findClassByCode(code) {
 
 async function joinClassInFirestore(classId, displayName) {
   const uid = await ensureAuth();
-  const companion = getCompanion(state.companionId);
-  const customization = getCustomization(state.companionId);
   const ref = db.collection("classes").doc(classId).collection("students").doc(uid);
   const existing = await ref.get();
   if (existing.exists) {
-    // Rejoining (e.g. page reload) — refresh name/appearance, keep points & purchases.
-    await ref.update({ name: displayName, companionId: companion.id, customization });
+    // Rejoining (e.g. page reload, or coming back another day) — refresh only
+    // the display name. The companion/customization picked the first time a
+    // student joined THIS class stays locked to this class forever, even if
+    // their personal companion has since changed — that's how a student ends
+    // up with a different character per class to track progress in each.
+    await ref.update({ name: displayName });
   } else {
+    const companion = getCompanion(state.companionId);
+    const customization = getCustomization(state.companionId);
     await ref.set({
       name: displayName,
       companionId: companion.id,

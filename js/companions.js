@@ -246,6 +246,16 @@ const ACCESSORY_CATALOG = [
       `<g class="glasses" style="stroke:#e8788a"><circle cx="122" cy="88" r="15"/><circle cx="158" cy="88" r="15"/><line x1="137" y1="86" x2="143" y2="86"/></g>`,
   },
   {
+    id: "glasses-sunglasses",
+    slot: "glasses",
+    zone: "head",
+    name: "Sunglasses",
+    icon: "🕶️",
+    price: 7,
+    render: () =>
+      `<g class="ol"><ellipse cx="122" cy="88" rx="15" ry="12" fill="#18110b"/><ellipse cx="158" cy="88" rx="15" ry="12" fill="#18110b"/><line x1="137" y1="86" x2="143" y2="86" stroke="#18110b" stroke-width="3"/></g>`,
+  },
+  {
     id: "earring-hoop",
     slot: "earring",
     zone: "head",
@@ -258,11 +268,41 @@ const ACCESSORY_CATALOG = [
     id: "hairclip-bow",
     slot: "hairclip",
     zone: "head",
-    name: "Bow Clip",
+    name: "Pink Bow",
     icon: "🎀",
     price: 5,
     render: () =>
       `<path class="ol" d="M158 50 L172 42 L172 58 Z" fill="#e8788a"/><path class="ol" d="M158 50 L144 42 L144 58 Z" fill="#e8788a"/><circle class="ol" cx="158" cy="50" r="4" fill="#c96f8a"/>`,
+  },
+  {
+    id: "hairclip-bow-blue",
+    slot: "hairclip",
+    zone: "head",
+    name: "Blue Bow",
+    icon: "🎀",
+    price: 5,
+    render: () =>
+      `<path class="ol" d="M158 50 L172 42 L172 58 Z" fill="#4a7fc9"/><path class="ol" d="M158 50 L144 42 L144 58 Z" fill="#4a7fc9"/><circle class="ol" cx="158" cy="50" r="4" fill="#356099"/>`,
+  },
+  {
+    id: "hairclip-bow-yellow",
+    slot: "hairclip",
+    zone: "head",
+    name: "Yellow Bow",
+    icon: "🎀",
+    price: 5,
+    render: () =>
+      `<path class="ol" d="M158 50 L172 42 L172 58 Z" fill="#f0c419"/><path class="ol" d="M158 50 L144 42 L144 58 Z" fill="#f0c419"/><circle class="ol" cx="158" cy="50" r="4" fill="#c99f14"/>`,
+  },
+  {
+    id: "hairclip-bow-purple",
+    slot: "hairclip",
+    zone: "head",
+    name: "Purple Bow",
+    icon: "🎀",
+    price: 5,
+    render: () =>
+      `<path class="ol" d="M158 50 L172 42 L172 58 Z" fill="#8d5fd3"/><path class="ol" d="M158 50 L144 42 L144 58 Z" fill="#8d5fd3"/><circle class="ol" cx="158" cy="50" r="4" fill="#6c46a8"/>`,
   },
   {
     id: "haircut-spiky",
@@ -287,6 +327,9 @@ const ACCESSORY_CATALOG = [
   { id: "eyecolor-blue", slot: "eyecolor", zone: "eyes", name: "Blue Eyes", icon: "🔵", price: 4, eyeColor: "#3a7bd5" },
   { id: "eyecolor-green", slot: "eyecolor", zone: "eyes", name: "Green Eyes", icon: "🟢", price: 4, eyeColor: "#4a9c5c" },
   { id: "eyecolor-violet", slot: "eyecolor", zone: "eyes", name: "Violet Eyes", icon: "🟣", price: 4, eyeColor: "#8d5fd3" },
+  { id: "eyecolor-amber", slot: "eyecolor", zone: "eyes", name: "Amber Eyes", icon: "🟠", price: 4, eyeColor: "#c9902b" },
+  { id: "eyecolor-hazel", slot: "eyecolor", zone: "eyes", name: "Hazel Eyes", icon: "🟤", price: 4, eyeColor: "#8a6c3f" },
+  { id: "eyecolor-gray", slot: "eyecolor", zone: "eyes", name: "Gray Eyes", icon: "⚪", price: 4, eyeColor: "#8a8a8a" },
   {
     id: "necklace-chain",
     slot: "necklace",
@@ -308,6 +351,36 @@ const ACCESSORY_CATALOG = [
       `<path class="ol" d="M104 118 Q140 132 176 118 L176 130 Q140 144 104 130 Z" fill="#c9432f"/><path class="ol" d="M150 128 L158 160 L142 160 Z" fill="#c9432f"/>`,
   },
   {
+    id: "scarf-blue",
+    slot: "scarf",
+    zone: "torso",
+    name: "Blue Scarf",
+    icon: "🧣",
+    price: 6,
+    render: () =>
+      `<path class="ol" d="M104 118 Q140 132 176 118 L176 130 Q140 144 104 130 Z" fill="#2b6fb0"/><path class="ol" d="M150 128 L158 160 L142 160 Z" fill="#2b6fb0"/>`,
+  },
+  {
+    id: "scarf-green",
+    slot: "scarf",
+    zone: "torso",
+    name: "Green Scarf",
+    icon: "🧣",
+    price: 6,
+    render: () =>
+      `<path class="ol" d="M104 118 Q140 132 176 118 L176 130 Q140 144 104 130 Z" fill="#4a9c5c" /><path class="ol" d="M150 128 L158 160 L142 160 Z" fill="#4a9c5c"/>`,
+  },
+  {
+    id: "scarf-purple",
+    slot: "scarf",
+    zone: "torso",
+    name: "Purple Scarf",
+    icon: "🧣",
+    price: 6,
+    render: () =>
+      `<path class="ol" d="M104 118 Q140 132 176 118 L176 130 Q140 144 104 130 Z" fill="#8d5fd3"/><path class="ol" d="M150 128 L158 160 L142 160 Z" fill="#8d5fd3"/>`,
+  },
+  {
     id: "tie-blue",
     slot: "tie",
     zone: "torso",
@@ -315,6 +388,33 @@ const ACCESSORY_CATALOG = [
     icon: "👔",
     price: 5,
     render: () => `<path class="ol" d="M132 122 L148 122 L152 138 L140 168 L128 138 Z" fill="#2b6fb0"/>`,
+  },
+  {
+    id: "tie-red",
+    slot: "tie",
+    zone: "torso",
+    name: "Red Tie",
+    icon: "👔",
+    price: 5,
+    render: () => `<path class="ol" d="M132 122 L148 122 L152 138 L140 168 L128 138 Z" fill="#c9432f"/>`,
+  },
+  {
+    id: "tie-green",
+    slot: "tie",
+    zone: "torso",
+    name: "Green Tie",
+    icon: "👔",
+    price: 5,
+    render: () => `<path class="ol" d="M132 122 L148 122 L152 138 L140 168 L128 138 Z" fill="#4a9c5c"/>`,
+  },
+  {
+    id: "tie-purple",
+    slot: "tie",
+    zone: "torso",
+    name: "Purple Tie",
+    icon: "👔",
+    price: 5,
+    render: () => `<path class="ol" d="M132 122 L148 122 L152 138 L140 168 L128 138 Z" fill="#8d5fd3"/>`,
   },
   {
     id: "shoes-red",
@@ -391,7 +491,7 @@ function speciesFeatures(species, colors) {
           <path class="ol" d="M174 62 L184 30 L156 52 Z" fill="${colors.accent}"/>
         `,
         tuft: `<path class="ol" d="M124 46 L128 30 L134 44 L140 26 L146 44 L152 30 L156 46 Z" fill="${colors.body}"/>`,
-        extra: `<path class="ol" d="M60 148 Q20 140 18 90 Q17 68 34 62 Q30 60 44 66 Q34 92 50 118 Q60 132 70 146 Q66 150 60 148 Z" fill="${colors.body}"/>`,
+        extra: `<path class="ol" d="M100 150 Q20 140 18 90 Q17 68 34 62 Q30 60 44 66 Q34 92 50 118 Q66 134 100 150 Z" fill="${colors.body}"/>`,
         nose: `<path class="ol" d="M132 100 L148 100 L140 111 Z" fill="#f28fa0"/>`,
         muzzle: `
           <g class="whisker-line">
@@ -423,7 +523,7 @@ function speciesFeatures(species, colors) {
           <path class="ol" d="M176 58 L188 26 L160 50 Z" fill="#241c18"/>
         `,
         extra: `
-          <path class="ol" d="M58 150 Q10 130 16 78 Q34 90 52 84 Q42 112 62 138 Q68 146 58 150 Z" fill="${colors.body}"/>
+          <path class="ol" d="M100 152 Q10 130 16 78 Q34 90 52 84 Q42 112 68 136 Q84 146 100 152 Z" fill="${colors.body}"/>
           <ellipse class="ol" cx="26" cy="86" rx="9" ry="8" fill="${colors.belly}"/>
         `,
         nose: `<path class="ol" d="M133 100 L147 100 L140 110 Z" fill="#241c18"/>`,
