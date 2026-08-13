@@ -18,6 +18,7 @@
     <button class="pill" id="btn-fish" title="Fish earned">🐟 <span id="fish-count">0</span></button>
     <button class="pill" id="btn-shop" title="Shop">🛍️ Shop</button>
     <button class="pill" id="btn-stats" title="Stats">📈 Stats</button>
+    <button class="pill" id="btn-customize" title="Customize companion">🎨 Customize</button>
     <button class="pill" id="btn-switch" title="Switch companion">🔁 Switch</button>
   </div>
 </header>
@@ -29,6 +30,37 @@
     <h1>Choose your focus companion</h1>
     <p class="subtitle">Pick who joins you on the chair while you work. You can switch anytime.</p>
     <div id="companion-grid" class="companion-grid"></div>
+  </section>
+
+  <!-- ===================== CUSTOMIZE SCREEN ===================== -->
+  <section id="screen-customize" class="screen hidden">
+    <h1 id="customize-title">Customize your companion</h1>
+    <p class="subtitle">Tune how they look and act — you can change this again anytime.</p>
+    <div class="customize-wrap">
+      <div class="customize-preview" id="customize-preview"></div>
+      <div class="customize-controls">
+        <div class="control-group">
+          <span class="control-label">Color</span>
+          <div class="swatch-row" id="opt-color"></div>
+        </div>
+        <div class="control-group">
+          <span class="control-label">Size</span>
+          <div class="swatch-row" id="opt-size"></div>
+        </div>
+        <div class="control-group">
+          <span class="control-label">Age</span>
+          <div class="swatch-row" id="opt-age"></div>
+        </div>
+        <div class="control-group">
+          <span class="control-label">Temperament</span>
+          <div class="swatch-row" id="opt-temperament"></div>
+        </div>
+        <div class="customize-actions">
+          <button class="ctrl-btn" id="customize-back">Back</button>
+          <button class="ctrl-btn primary" id="customize-confirm">Start Focusing</button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- ===================== FOCUS ROOM SCREEN ===================== -->

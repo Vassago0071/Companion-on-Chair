@@ -14,9 +14,15 @@ python3 -m http.server 8000
 
 ## What's included
 
-- **5 companions** to choose from, each hand-drawn as inline SVG sitting on a
-  shared chair: Momo (cat), Biscuit (corgi), Ember (fox), Sage (owl), Clover
-  (bunny). Switch companions anytime.
+- **5 companions** to choose from, each an inline SVG sitting on a shared
+  chair, drawn in a bold-outline, flat-cutout style: Momo (cat), Biscuit
+  (corgi), Ember (fox), Sage (owl), Clover (bunny). Switch companions
+  anytime.
+- **Customization** at pick-time (and anytime after via the "Customize"
+  button): color palette, size, age (young/adult/elder, with matching
+  visual cues like blush cheeks or glasses), and temperament
+  (calm/playful/grumpy/sleepy, which changes their expression and idle
+  animation pace).
 - **Pomodoro mode** (15/25/45/60 min) and **count-up (flowtime) mode**.
 - **Rewards**: finishing a session earns a random gift and fish; giving up
   early only nets virtual trash and no fish.
@@ -30,14 +36,18 @@ python3 -m http.server 8000
 
 ## Files
 
-- `index.html` — screens and modals (companion picker, focus room, shop,
-  tasks, stats, reward popup).
-- `css/style.css` — warm, hand-drawn-feeling visual theme.
-- `js/companions.js` — companion roster + the SVG chair/character renderer.
-- `js/app.js` — timer logic, rewards, shop, tasks, and persistence.
+- `index.html` — screens and modals (companion picker, customize screen,
+  focus room, shop, tasks, stats, reward popup).
+- `css/style.css` — warm, flat-cutout visual theme.
+- `js/companions.js` — companion roster, customization options (palettes,
+  sizes, ages, temperaments), and the SVG chair/character renderer.
+- `js/app.js` — timer logic, rewards, shop, tasks, customization, and
+  persistence.
 
 ## Notes
 
-The companion illustrations and the "Focus Companion" branding here are
-original to this project — they don't reuse artwork, names, or assets from
-any third-party app.
+The companion illustrations and "Companion on Chair" branding here are
+original to this project. The bold-outline, flat-cutout look is a general
+animation *style* choice (thick outlines, oversized eyes, simple flat
+shapes) — the specific characters, names, and artwork are original, not
+reused from any third-party show or app.

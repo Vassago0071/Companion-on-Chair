@@ -37,9 +37,18 @@ const defaultState = () => ({
   tasks: [],
   activeTaskId: null,
   ownedDecor: [],
+  customizations: {},
 });
 
 let state = loadState();
+
+function getCustomization(id) {
+  return Object.assign(defaultCustomization(), (state.customizations && state.customizations[id]) || {});
+}
+
+/* companion id currently being edited on the customize screen, and its unsaved draft */
+let customizeTargetId = null;
+let draftCustomization = defaultCustomization();
 
 let timer = {
   mode: "pomodoro",
@@ -67,6 +76,7 @@ function saveState() {
 /* ---------------------------- element refs ---------------------------- */
 const el = (id) => document.getElementById(id);
 const screenSelect = el("screen-select");
+const screenCustomize = el("screen-customize");
 const screenFocus = el("screen-focus");
 const companionGrid = el("companion-grid");
 const chairStage = el("chair-stage");
@@ -88,24 +98,19 @@ function renderCompanionGrid() {
     const card = document.createElement("button");
     card.className = "companion-card";
     card.innerHTML = `
-      <div class="companion-card-art">${companionSVG(c, "idle")}</div>
+      <div class="companion-card-art">${companionSVG(c, "idle", getCustomization(c.id))}</div>
       <div class="companion-card-name">${c.name}</div>
       <div class="companion-card-species">${c.species}</div>
       <div class="companion-card-tagline">${c.tagline}</div>
     `;
-    card.addEventListener("click", () => selectCompanion(c.id));
+    card.addEventListener("click", () => openCustomize(c.id, { fromSelect: true }));
     companionGrid.appendChild(card);
   });
 }
 
-function selectCompanion(id) {
-  state.companionId = id;
-  saveState();
-  showFocusScreen();
-}
-
 function showFocusScreen() {
   screenSelect.classList.add("hidden");
+  screenCustomize.classList.add("hidden");
   screenFocus.classList.remove("hidden");
   renderChair();
   renderDecor();
@@ -114,13 +119,68 @@ function showFocusScreen() {
 
 function showSelectScreen() {
   screenFocus.classList.add("hidden");
+  screenCustomize.classList.add("hidden");
   screenSelect.classList.remove("hidden");
   renderCompanionGrid();
 }
 
 function renderChair(companionState = "idle") {
   const c = getCompanion(state.companionId);
-  chairStage.innerHTML = companionSVG(c, companionState);
+  chairStage.innerHTML = companionSVG(c, companionState, getCustomization(state.companionId));
+}
+
+/* ---------------------------- customize screen --------------------------- */
+
+function openCustomize(companionId, { fromSelect }) {
+  customizeTargetId = companionId;
+  draftCustomization = getCustomization(companionId);
+  el("customize-title").textContent = `Customize ${getCompanion(companionId).name}`;
+  renderCustomizeOptions();
+  renderCustomizePreview();
+
+  screenSelect.classList.add("hidden");
+  screenFocus.classList.add("hidden");
+  screenCustomize.classList.remove("hidden");
+
+  el("customize-back").onclick = () => {
+    if (fromSelect) {
+      showSelectScreen();
+    } else {
+      showFocusScreen();
+    }
+  };
+}
+
+function renderCustomizePreview() {
+  el("customize-preview").innerHTML = companionSVG(getCompanion(customizeTargetId), "idle", draftCustomization);
+}
+
+function renderOptionRow(containerId, options, key, formatLabel) {
+  const wrap = el(containerId);
+  wrap.innerHTML = "";
+  options.forEach((opt) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "swatch-btn" + (draftCustomization[key] === opt.id ? " active" : "");
+    if (opt.colors) {
+      btn.classList.add("swatch-color");
+      btn.style.setProperty("--swatch-color", opt.colors.body);
+    }
+    btn.textContent = formatLabel(opt);
+    btn.addEventListener("click", () => {
+      draftCustomization[key] = opt.id;
+      renderCustomizeOptions();
+      renderCustomizePreview();
+    });
+    wrap.appendChild(btn);
+  });
+}
+
+function renderCustomizeOptions() {
+  renderOptionRow("opt-color", PALETTES, "colorId", (p) => p.name);
+  renderOptionRow("opt-size", SIZES, "sizeId", (s) => s.label);
+  renderOptionRow("opt-age", AGES, "ageId", (a) => a.label);
+  renderOptionRow("opt-temperament", TEMPERAMENTS, "temperamentId", (t) => `${t.icon} ${t.label}`);
 }
 
 function renderDecor() {
@@ -434,6 +494,21 @@ function wireEvents() {
       btnStop.disabled = true;
     }
     showSelectScreen();
+  });
+
+  el("customize-confirm").addEventListener("click", () => {
+    state.customizations[customizeTargetId] = { ...draftCustomization };
+    state.companionId = customizeTargetId;
+    saveState();
+    showFocusScreen();
+  });
+
+  el("btn-customize").addEventListener("click", () => {
+    if (!state.companionId) {
+      showSelectScreen();
+      return;
+    }
+    openCustomize(state.companionId, { fromSelect: false });
   });
 
   el("btn-shop").addEventListener("click", () => {
