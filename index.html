@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Focus Companion</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">🪑</span>
+    <span class="brand-name">Focus Companion</span>
+  </div>
+  <div class="topbar-actions">
+    <button class="pill" id="btn-tasks" title="Tasks">📋 <span id="task-count">0</span></button>
+    <button class="pill" id="btn-fish" title="Fish earned">🐟 <span id="fish-count">0</span></button>
+    <button class="pill" id="btn-shop" title="Shop">🛍️ Shop</button>
+    <button class="pill" id="btn-stats" title="Stats">📈 Stats</button>
+    <button class="pill" id="btn-switch" title="Switch companion">🔁 Switch</button>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- ===================== COMPANION SELECT SCREEN ===================== -->
+  <section id="screen-select" class="screen">
+    <h1>Choose your focus companion</h1>
+    <p class="subtitle">Pick who joins you on the chair while you work. You can switch anytime.</p>
+    <div id="companion-grid" class="companion-grid"></div>
+  </section>
+
+  <!-- ===================== FOCUS ROOM SCREEN ===================== -->
+  <section id="screen-focus" class="screen hidden">
+    <div class="room-wrap">
+      <div class="room" id="room">
+        <div class="room-decor" id="room-decor"></div>
+        <div class="chair-stage" id="chair-stage"></div>
+        <div class="active-task" id="active-task-banner"></div>
+      </div>
+
+      <div class="timer-panel">
+        <div class="mode-toggle" role="tablist">
+          <button class="mode-btn active" data-mode="pomodoro">Pomodoro</button>
+          <button class="mode-btn" data-mode="countup">Count-Up</button>
+        </div>
+
+        <div class="duration-row" id="duration-row">
+          <button class="dur-btn" data-min="15">15m</button>
+          <button class="dur-btn active" data-min="25">25m</button>
+          <button class="dur-btn" data-min="45">45m</button>
+          <button class="dur-btn" data-min="60">60m</button>
+        </div>
+
+        <div class="clock" id="clock">25:00</div>
+        <div class="clock-caption" id="clock-caption">Ready when you are</div>
+
+        <div class="controls">
+          <button class="ctrl-btn primary" id="btn-start">Start Focus</button>
+          <button class="ctrl-btn" id="btn-pause" disabled>Pause</button>
+          <button class="ctrl-btn danger" id="btn-stop" disabled>Give Up</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== REWARD MODAL ===================== -->
+<div class="modal-backdrop hidden" id="modal-reward">
+  <div class="modal">
+    <div class="reward-icon" id="reward-icon">🎁</div>
+    <h2 id="reward-title">Session complete!</h2>
+    <p id="reward-desc">Your companion left you something.</p>
+    <button class="ctrl-btn primary" id="reward-close">Nice!</button>
+  </div>
+</div>
+
+<!-- ===================== SHOP MODAL ===================== -->
+<div class="modal-backdrop hidden" id="modal-shop">
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <h2>Shop</h2>
+      <span class="fish-tag">🐟 <span id="shop-fish-count">0</span></span>
+      <button class="modal-close" id="shop-close">✕</button>
+    </div>
+    <p class="subtitle">Spend fish on decor for your companion's room.</p>
+    <div id="shop-grid" class="shop-grid"></div>
+  </div>
+</div>
+
+<!-- ===================== TASKS MODAL ===================== -->
+<div class="modal-backdrop hidden" id="modal-tasks">
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <h2>Tasks</h2>
+      <button class="modal-close" id="tasks-close">✕</button>
+    </div>
+    <form id="task-form" class="task-form">
+      <input type="text" id="task-input" placeholder="What are you focusing on?" autocomplete="off" />
+      <button type="submit" class="ctrl-btn primary">Add</button>
+    </form>
+    <ul id="task-list" class="task-list"></ul>
+  </div>
+</div>
+
+<!-- ===================== STATS MODAL ===================== -->
+<div class="modal-backdrop hidden" id="modal-stats">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Your Stats</h2>
+      <button class="modal-close" id="stats-close">✕</button>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-box"><span class="stat-num" id="stat-sessions">0</span><span class="stat-label">Sessions completed</span></div>
+      <div class="stat-box"><span class="stat-num" id="stat-minutes">0</span><span class="stat-label">Focus minutes</span></div>
+      <div class="stat-box"><span class="stat-num" id="stat-streak">0</span><span class="stat-label">Day streak</span></div>
+      <div class="stat-box"><span class="stat-num" id="stat-gifts">0</span><span class="stat-label">Gifts received</span></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/companions.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
