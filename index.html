@@ -183,6 +183,10 @@
         <button class="class-dur-btn" data-min="45">45m</button>
         <button class="class-dur-btn" data-min="60">60m</button>
       </div>
+      <div class="class-timer-custom">
+        <input type="number" id="class-timer-custom-min" min="1" max="240" placeholder="Custom minutes" />
+        <button class="ctrl-btn" id="class-timer-custom-set">Use Custom</button>
+      </div>
       <div class="class-timer-display" id="teacher-class-timer-display">Not running</div>
       <div class="class-timer-controls">
         <button class="ctrl-btn primary" id="btn-start-class-timer">Start Class Timer</button>
@@ -301,6 +305,27 @@
     </div>
     <div id="class-shop-grid" class="shop-grid"></div>
     <div id="class-shop-accessories-grid" class="shop-grid hidden"></div>
+  </div>
+</div>
+
+<!-- ===================== STUDENT SCORE MODAL ===================== -->
+<div class="modal-backdrop hidden" id="modal-student-score">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="score-modal-name">Student</h2>
+      <button class="modal-close" id="score-modal-close">✕</button>
+    </div>
+    <div id="score-bars" class="score-bars"></div>
+    <div class="control-group hidden" id="score-bonus-form">
+      <span class="control-label">Give Bonus Points</span>
+      <input type="text" id="score-bonus-title" placeholder="Reason (e.g. 'Helped a classmate')" />
+      <div class="score-bonus-buttons">
+        <button class="ctrl-btn primary" id="score-bonus-give-1">+1 Bonus</button>
+        <button class="ctrl-btn primary" id="score-bonus-give-5">+5 Bonus</button>
+      </div>
+    </div>
+    <div id="score-bonus-log" class="score-bonus-log"></div>
+    <div class="score-total">Total: <span id="score-total-points">0</span> 🏅</div>
   </div>
 </div>
 

@@ -36,8 +36,10 @@ python3 -m http.server 8000
 - **Pomodoro mode** (15/25/45/60 min) and **count-up (flowtime) mode**.
 - **Rewards**: finishing a session earns a random gift and fish; giving up
   early only nets virtual trash and no fish.
-- **Shop**: spend fish on room decor (rugs, plants, lamps, etc.) that appears
-  around your companion.
+- **Shop**: spend fish on room decor (rugs, plants, lamps, etc.) or on
+  **accessories** (hats, glasses, sunglasses, earrings, hairclips/bows,
+  haircuts, eye colors, necklaces, scarves, ties, shoes — dozens of items)
+  that equip onto whichever companion is active.
 - **Task list**: add tasks and mark one as the active focus for the session,
   shown as a banner in the room.
 - **Stats**: sessions completed, total focus minutes, day streak, gifts
@@ -46,19 +48,29 @@ python3 -m http.server 8000
   classes (each with its own short join code), and reopens any of them
   anytime from **My Classes** — points and rosters persist across sessions
   and devices tied to that Google account. Students join anonymously with
-  just a code and a name, bringing their own companion. The whole class is
-  visible to everyone in a live-updating leaderboard (points sorted
-  descending) for friendly competitive bragging. The teacher can award (or
-  remove) points to any student in real time; students spend those points in
-  a **class-scoped shop** — separate from their personal fish/decor — so
-  purchases only ever apply within that teacher's class. Each class also has
-  a **room theme** (a few preset background palettes the teacher picks, seen
-  live by every student), a **class timer** — a shared Pomodoro countdown
-  that lives in Firestore, not in the teacher's browser, so it keeps running
-  for students exactly the same whether or not the teacher's tab stays open
-  — and **Lesson Materials**: the teacher can type notes/homework and upload
-  files (PPTs, PDFs, images, docs) that every student sees live on their
-  dashboard, with a direct download link for each file.
+  just a code and a name, bringing their own companion — and that companion
+  and its look stay locked to that class from then on, so a student can run
+  a different character per class to track progress in each independently
+  (switching your personal companion elsewhere doesn't touch a class you've
+  already joined). The whole class is visible to everyone in a live-updating
+  leaderboard (points sorted descending) for friendly competitive bragging.
+  Instead of one flat point count, the teacher scores each student across
+  **six bars** — Attention, Engagement, Completion of Work, Obedience,
+  Friendliness, and Bonus (which requires a short reason each time, logged
+  to a bonus history) — opened from a student's roster card; a student can
+  view their own six bars read-only. Total class points (the leaderboard
+  and shop currency) is always the sum of the six. Students spend those
+  points in a **class-scoped shop** — decor and accessories, separate from
+  personal fish/decor/accessories — so purchases only ever apply within that
+  teacher's class. Each class also has a **room theme** (preset background
+  palettes the teacher picks, seen live by every student), a **class timer**
+  — Pomodoro presets or any custom length in minutes, since not every class
+  starts on schedule — that lives in Firestore, not in the teacher's
+  browser, so it keeps running for students exactly the same whether or not
+  the teacher's tab stays open — and **Lesson Materials**: the teacher can
+  type notes/homework and upload files (PPTs, PDFs, images, docs) that every
+  student sees live on their dashboard, with a direct download link for each
+  file.
   Requires a Firebase project to sync across devices; see "Classroom Mode
   setup" below.
 - Everything else persists in `localStorage` — no backend required.

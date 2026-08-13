@@ -11,8 +11,10 @@ rules_version = '2';
 //     create it, update it (e.g. end the session), or edit any student's
 //     points within it.
 //   - A student can only ever create/update their OWN roster entry, and a
-//     student-authored update can never increase their own points (points
-//     only move up via the teacher, or down via a class-shop purchase).
+//     student-authored update can never increase their own points, touch
+//     their own scores (the six teacher-scored bars) or bonus history, or
+//     shrink their purchase history (points only move up via the teacher,
+//     or down via a class-shop purchase).
 //
 // Known limitation: Firestore rules can't fully validate that a student's
 // purchase matches a real shop item's price -- a determined user could craft
@@ -44,7 +46,9 @@ service cloud.firestore {
             request.auth.uid == studentUid &&
             request.resource.data.points <= resource.data.points &&
             request.resource.data.ownedDecor.size() >= resource.data.ownedDecor.size() &&
-            request.resource.data.get('ownedAccessories', []).size() >= resource.data.get('ownedAccessories', []).size()
+            request.resource.data.get('ownedAccessories', []).size() >= resource.data.get('ownedAccessories', []).size() &&
+            request.resource.data.get('scores', {}) == resource.data.get('scores', {}) &&
+            request.resource.data.get('bonusLog', []).size() == resource.data.get('bonusLog', []).size()
           )
         );
         allow delete: if false;

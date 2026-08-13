@@ -865,17 +865,51 @@ body {
   margin-top: 2px;
 }
 
-.roster-point-controls {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
+.score-open-btn {
   margin-top: 10px;
+  font-size: 0.85rem;
+  padding: 6px 12px;
 }
 
-.point-btn {
+.score-bars {
+  margin: 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--cream-2);
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.score-label {
+  font-weight: 700;
+  color: var(--brown);
+  flex: 1;
+}
+
+.score-value {
+  font-weight: 700;
+  color: var(--accent-2);
+  min-width: 24px;
+  text-align: center;
+}
+
+.score-row-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.score-adj {
   border: none;
   border-radius: 8px;
-  padding: 6px 10px;
+  padding: 4px 10px;
   font-weight: 700;
   cursor: pointer;
   background: var(--accent);
@@ -883,9 +917,45 @@ body {
   font-size: 0.85rem;
 }
 
-.point-btn.subtract {
-  background: var(--cream-2);
+.score-adj[data-delta^="-"] {
+  background: var(--cream);
   color: var(--danger);
+}
+
+#score-bonus-form input {
+  width: 100%;
+  border: 2px solid var(--cream-2);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin: 6px 0;
+}
+
+.score-bonus-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.score-bonus-log {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: #8a7360;
+}
+
+.score-bonus-log h4 {
+  color: var(--brown);
+  margin-bottom: 4px;
+}
+
+.bonus-log-entry {
+  padding: 3px 0;
+}
+
+.score-total {
+  margin-top: 14px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--brown);
 }
 
 .teacher-dashboard-actions {
@@ -1044,6 +1114,22 @@ body {
   background: var(--brown-soft);
   border-color: var(--brown-soft);
   color: #fff;
+}
+
+.class-timer-custom {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.class-timer-custom input {
+  width: 130px;
+  border: 2px solid var(--cream-2);
+  border-radius: 12px;
+  padding: 6px 10px;
+  font-weight: 600;
+  color: var(--brown);
 }
 
 .class-timer-display {

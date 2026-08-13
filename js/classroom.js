@@ -14,6 +14,25 @@ const CLASSROOM_THEMES = [
   { id: "lavender", label: "Lavender" },
 ];
 
+/* The six scoring bars a teacher tracks per student. A student's total
+ * class points (used for the leaderboard and the class shop) is always the
+ * sum of these six -- awardScore() increments both the category and the
+ * total atomically so they can never drift apart. */
+const SCORE_CATEGORIES = [
+  { id: "attention", label: "Attention", icon: "👀" },
+  { id: "engagement", label: "Engagement", icon: "🙋" },
+  { id: "completion", label: "Completion of Work", icon: "✅" },
+  { id: "obedience", label: "Obedience", icon: "🧭" },
+  { id: "friendliness", label: "Friendliness", icon: "🤝" },
+  { id: "bonus", label: "Bonus", icon: "⭐" },
+];
+
+function emptyScores() {
+  const scores = {};
+  SCORE_CATEGORIES.forEach((c) => (scores[c.id] = 0));
+  return scores;
+}
+
 let firebaseApp = null;
 let db = null;
 let auth = null;
@@ -162,6 +181,8 @@ async function joinClassInFirestore(classId, displayName) {
       companionId: companion.id,
       customization,
       points: 0,
+      scores: emptyScores(),
+      bonusLog: [],
       ownedDecor: [],
       ownedAccessories: [],
       equippedAccessories: {},
@@ -180,13 +201,25 @@ function listenToRoster(classId, callback) {
     .onSnapshot((snap) => callback(snap.docs.map((d) => ({ uid: d.id, ...d.data() }))));
 }
 
-async function awardPoints(classId, studentUid, delta) {
-  await db
-    .collection("classes")
-    .doc(classId)
-    .collection("students")
-    .doc(studentUid)
-    .update({ points: firebase.firestore.FieldValue.increment(delta) });
+/* Adjusts one of the six score bars for a student. Total class points (the
+ * leaderboard/shop currency) is incremented by the same delta in the same
+ * write, so it always equals the sum of the six bars. Giving bonus points
+ * requires a short reason, logged to bonusLog for the "why bonus was given"
+ * history. */
+async function awardScore(classId, studentUid, category, delta, bonusTitle) {
+  const ref = db.collection("classes").doc(classId).collection("students").doc(studentUid);
+  const update = {
+    [`scores.${category}`]: firebase.firestore.FieldValue.increment(delta),
+    points: firebase.firestore.FieldValue.increment(delta),
+  };
+  if (category === "bonus") {
+    update.bonusLog = firebase.firestore.FieldValue.arrayUnion({
+      title: bonusTitle || "Bonus",
+      amount: delta,
+      at: Date.now(),
+    });
+  }
+  await ref.update(update);
 }
 
 async function buyClassDecor(classId, studentUid, item) {
@@ -379,6 +412,7 @@ function renderRoster(containerId, students, { highlightUid, isTeacher, classId 
   students.forEach((s, idx) => {
     const companion = getCompanion(s.companionId);
     const artCustom = { ...s.customization, accessories: s.equippedAccessories || {} };
+    const canViewScores = isTeacher || s.uid === highlightUid;
     const card = document.createElement("div");
     card.className = "roster-card" + (s.uid === highlightUid ? " me" : "");
     card.innerHTML = `
@@ -386,27 +420,110 @@ function renderRoster(containerId, students, { highlightUid, isTeacher, classId 
       <div class="roster-art">${renderCompanionArt(companion, "idle", artCustom)}</div>
       <div class="roster-name">${escapeHTML(s.name || "Student")}</div>
       <div class="roster-points">${s.points || 0} 🏅</div>
+      ${canViewScores ? `<button class="ctrl-btn score-open-btn">📊 ${isTeacher ? "Scores" : "My Scores"}</button>` : ""}
+    `;
+    if (canViewScores) {
+      card.querySelector(".score-open-btn").addEventListener("click", () => {
+        openScoreModal(classId, s, isTeacher);
+      });
+    }
+    wrap.appendChild(card);
+  });
+}
+
+/* ------------------------- per-student score modal ----------------------- */
+let scoringContext = null; // { classId, studentUid, isTeacher }
+
+function openScoreModal(classId, student, isTeacher) {
+  scoringContext = { classId, studentUid: student.uid, isTeacher };
+  classroomEl("score-modal-name").textContent = `${student.name || "Student"}'s Scores`;
+  classroomEl("score-bonus-form").classList.toggle("hidden", !isTeacher);
+  classroomEl("score-bonus-title").value = "";
+  renderScoreBars(student, isTeacher);
+  renderBonusLog(student.bonusLog || []);
+  classroomEl("score-total-points").textContent = student.points || 0;
+  openModal("modal-student-score");
+}
+
+function renderScoreBars(student, isTeacher) {
+  const wrap = classroomEl("score-bars");
+  const scores = student.scores || {};
+  wrap.innerHTML = "";
+  SCORE_CATEGORIES.filter((c) => c.id !== "bonus").forEach((cat) => {
+    const val = scores[cat.id] || 0;
+    const row = document.createElement("div");
+    row.className = "score-row";
+    row.innerHTML = `
+      <span class="score-label">${cat.icon} ${cat.label}</span>
+      <span class="score-value">${val}</span>
       ${
         isTeacher
-          ? `<div class="roster-point-controls">
-        <button class="point-btn" data-delta="1">+1</button>
-        <button class="point-btn" data-delta="5">+5</button>
-        <button class="point-btn subtract" data-delta="-1">-1</button>
+          ? `<div class="score-row-btns">
+        <button class="ctrl-btn score-adj" data-cat="${cat.id}" data-delta="-1">-1</button>
+        <button class="ctrl-btn score-adj" data-cat="${cat.id}" data-delta="1">+1</button>
       </div>`
           : ""
       }
     `;
     if (isTeacher) {
-      card.querySelectorAll(".point-btn").forEach((btn) => {
+      row.querySelectorAll(".score-adj").forEach((btn) => {
         btn.addEventListener("click", () => {
-          awardPoints(classId, s.uid, Number(btn.dataset.delta)).catch((err) => {
-            alert("Could not award points: " + err.message);
-          });
+          awardScore(scoringContext.classId, scoringContext.studentUid, btn.dataset.cat, Number(btn.dataset.delta)).catch(
+            (err) => alert("Could not update score: " + err.message)
+          );
         });
       });
     }
-    wrap.appendChild(card);
+    wrap.appendChild(row);
   });
+  const bonusRow = document.createElement("div");
+  bonusRow.className = "score-row";
+  bonusRow.innerHTML = `<span class="score-label">⭐ Bonus</span><span class="score-value">${scores.bonus || 0}</span>`;
+  wrap.appendChild(bonusRow);
+}
+
+function renderBonusLog(log) {
+  const wrap = classroomEl("score-bonus-log");
+  if (!log || log.length === 0) {
+    wrap.innerHTML = `<p class="task-empty">No bonus points given yet.</p>`;
+    return;
+  }
+  wrap.innerHTML =
+    `<h4>Bonus history</h4>` +
+    log
+      .slice()
+      .reverse()
+      .slice(0, 10)
+      .map((e) => `<div class="bonus-log-entry">+${e.amount} — ${escapeHTML(e.title)}</div>`)
+      .join("");
+}
+
+function giveBonus(amount) {
+  if (!scoringContext) return;
+  const input = classroomEl("score-bonus-title");
+  const title = input.value.trim();
+  if (!title) {
+    alert("Enter a reason for the bonus points first.");
+    return;
+  }
+  awardScore(scoringContext.classId, scoringContext.studentUid, "bonus", amount, title).catch((err) => {
+    alert("Could not give bonus: " + err.message);
+  });
+  input.value = "";
+}
+
+/* Keeps the score modal's bars/log in sync with the live roster listener,
+ * so a teacher watching a student's scores sees +/- clicks reflected right
+ * away without having to close and reopen the modal. */
+function refreshScoreModalIfOpen(students) {
+  if (!scoringContext) return;
+  const modal = classroomEl("modal-student-score");
+  if (!modal || modal.classList.contains("hidden")) return;
+  const student = students.find((s) => s.uid === scoringContext.studentUid);
+  if (!student) return;
+  renderScoreBars(student, scoringContext.isTeacher);
+  renderBonusLog(student.bonusLog || []);
+  classroomEl("score-total-points").textContent = student.points || 0;
 }
 
 function applyClassroomBackground(screenId, themeId) {
@@ -437,6 +554,7 @@ function renderThemePicker(classId, currentTheme) {
  * than driven by any server push, so it ticks smoothly between snapshots. */
 let currentClassTimerData = null;
 let classTimerTickHandle = null;
+let selectedClassDurationMin = 25;
 
 function formatClassTimer(sec) {
   const m = Math.floor(sec / 60)
@@ -536,6 +654,7 @@ function openTeacherDashboard(classId, className, code) {
   if (classDocUnsubscribe) classDocUnsubscribe();
   rosterUnsubscribe = listenToRoster(classId, (students) => {
     renderRoster("teacher-roster", students, { isTeacher: true, classId });
+    refreshScoreModalIfOpen(students);
   });
   classDocUnsubscribe = listenToClassDoc(classId, (classData) => {
     if (!classData) return;
@@ -556,7 +675,8 @@ function openStudentDashboard(classId, className, myUid) {
   if (classDocUnsubscribe) classDocUnsubscribe();
   rosterUnsubscribe = listenToRoster(classId, (students) => {
     studentRosterCache = students;
-    renderRoster("student-roster", students, { highlightUid: myUid });
+    renderRoster("student-roster", students, { highlightUid: myUid, classId });
+    refreshScoreModalIfOpen(students);
     const me = students.find((s) => s.uid === myUid);
     classroomEl("student-points").textContent = me ? me.points || 0 : 0;
   });
@@ -793,14 +913,25 @@ function wireClassroomEvents() {
   document.querySelectorAll(".class-dur-btn").forEach((b) =>
     b.addEventListener("click", () => {
       document.querySelectorAll(".class-dur-btn").forEach((x) => x.classList.toggle("active", x === b));
+      selectedClassDurationMin = Number(b.dataset.min);
+      classroomEl("class-timer-custom-min").value = "";
     })
   );
 
+  classroomEl("class-timer-custom-set").addEventListener("click", () => {
+    const input = classroomEl("class-timer-custom-min");
+    const minutes = Math.round(Number(input.value));
+    if (!minutes || minutes < 1 || minutes > 240) {
+      alert("Enter a class length between 1 and 240 minutes.");
+      return;
+    }
+    selectedClassDurationMin = minutes;
+    document.querySelectorAll(".class-dur-btn").forEach((x) => x.classList.remove("active"));
+  });
+
   classroomEl("btn-start-class-timer").addEventListener("click", () => {
     if (!classroomSession) return;
-    const activeDurBtn = document.querySelector(".class-dur-btn.active");
-    const durationMin = activeDurBtn ? Number(activeDurBtn.dataset.min) : 25;
-    startClassTimer(classroomSession.classId, durationMin).catch((err) => {
+    startClassTimer(classroomSession.classId, selectedClassDurationMin).catch((err) => {
       alert("Could not start the class timer: " + err.message);
     });
   });
@@ -849,6 +980,13 @@ function wireClassroomEvents() {
   classroomEl("class-shop-close").addEventListener("click", () => closeModal("modal-class-shop"));
   classroomEl("class-shop-tab-decor").addEventListener("click", () => switchClassShopTab("decor"));
   classroomEl("class-shop-tab-accessories").addEventListener("click", () => switchClassShopTab("accessories"));
+
+  classroomEl("score-modal-close").addEventListener("click", () => {
+    closeModal("modal-student-score");
+    scoringContext = null;
+  });
+  classroomEl("score-bonus-give-1").addEventListener("click", () => giveBonus(1));
+  classroomEl("score-bonus-give-5").addEventListener("click", () => giveBonus(5));
 
   classroomEl("btn-save-lesson-notes").addEventListener("click", () => {
     if (!classroomSession) return;
