@@ -36,14 +36,22 @@ python3 -m http.server 8000
   shown as a banner in the room.
 - **Stats**: sessions completed, total focus minutes, day streak, gifts
   received.
-- **Classroom Mode**: a teacher hosts a live class session and shares a short
-  code; students join with that code and their companion. The whole class is
+- **Classroom Mode**: a teacher signs in with Google, hosts one or more named
+  classes (each with its own short join code), and reopens any of them
+  anytime from **My Classes** — points and rosters persist across sessions
+  and devices tied to that Google account. Students join anonymously with
+  just a code and a name, bringing their own companion. The whole class is
   visible to everyone in a live-updating leaderboard (points sorted
   descending) for friendly competitive bragging. The teacher can award (or
   remove) points to any student in real time; students spend those points in
   a **class-scoped shop** — separate from their personal fish/decor — so
-  purchases only ever apply within that teacher's session. Requires a
-  Firebase project to sync across devices; see "Classroom Mode setup" below.
+  purchases only ever apply within that teacher's class. Each class also has
+  a **room theme** (a few preset background palettes the teacher picks, seen
+  live by every student) and a **class timer** — a shared Pomodoro countdown
+  that lives in Firestore, not in the teacher's browser, so it keeps running
+  for students exactly the same whether or not the teacher's tab stays open.
+  Requires a Firebase project to sync across devices; see "Classroom Mode
+  setup" below.
 - Everything else persists in `localStorage` — no backend required.
 
 ## Files
@@ -66,14 +74,18 @@ python3 -m http.server 8000
 ## Classroom Mode setup
 
 Classroom Mode needs a real backend to sync points and rosters across
-different students' devices, so it uses Firebase (Firestore + Anonymous
-Auth). Without it configured, the Classroom screen shows a setup notice and
-the rest of the app works exactly as before.
+different students' devices, so it uses Firebase: Firestore for data, plus
+two Auth providers — **Google Sign-In** for teachers (so their classes
+persist and follow them across devices) and **Anonymous Auth** for students
+(no account needed, just a code and a name). Without it configured, the
+Classroom screen shows a setup notice and the rest of the app works exactly
+as before.
 
 1. Create a free project at [console.firebase.google.com](https://console.firebase.google.com).
 2. **Build → Firestore Database → Create database** (production mode is fine
    — the rules below lock it down).
-3. **Build → Authentication → Sign-in method** → enable **Anonymous**.
+3. **Build → Authentication → Sign-in method** → enable both **Google** and
+   **Anonymous**.
 4. **Project settings → General → Your apps → Add app → Web** → register it,
    then copy the `firebaseConfig` object it gives you into
    `js/firebase-config.js` (`FIREBASE_CONFIG`).

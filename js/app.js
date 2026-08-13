@@ -122,6 +122,8 @@ const ALL_SCREEN_IDS = [
   "screen-customize",
   "screen-focus",
   "screen-classroom-home",
+  "screen-classroom-teacher-login",
+  "screen-my-classes",
   "screen-classroom-host",
   "screen-classroom-join",
   "screen-classroom-teacher",

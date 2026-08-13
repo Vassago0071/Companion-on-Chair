@@ -1,16 +1,26 @@
 /* Classroom Mode — teacher-hosted sessions with a live class leaderboard and
- * a session-scoped shop. Backed by Firebase (Firestore + Anonymous Auth); see
- * js/firebase-config.js for setup. If Firebase isn't configured yet, the
- * Classroom screen shows a setup notice and the rest of the app is
- * unaffected. */
+ * a session-scoped shop. Backed by Firebase (Firestore + Google Sign-In for
+ * teachers, Anonymous Auth for students); see js/firebase-config.js for
+ * setup. If Firebase isn't configured yet, the Classroom screen shows a
+ * setup notice and the rest of the app is unaffected. */
 
 const CLASSROOM_KEY = "focusCompanion.classroom.v1";
+
+const CLASSROOM_THEMES = [
+  { id: "classic", label: "Classic" },
+  { id: "sunrise", label: "Sunrise" },
+  { id: "ocean", label: "Ocean" },
+  { id: "forest", label: "Forest" },
+  { id: "lavender", label: "Lavender" },
+];
 
 let firebaseApp = null;
 let db = null;
 let auth = null;
+let googleProvider = null;
 let currentUid = null;
 let rosterUnsubscribe = null;
+let classDocUnsubscribe = null;
 let studentRosterCache = [];
 let classroomSession = loadClassroomSession();
 
@@ -60,6 +70,42 @@ function ensureAuth() {
   });
 }
 
+/* Waits for Firebase's own persisted auth session (if any) to resolve,
+ * without forcing anonymous sign-in. Used on page load to see whether a
+ * teacher is still signed in with Google from a previous visit. */
+function waitForAuthReady() {
+  return new Promise((resolve) => {
+    if (!FIREBASE_CONFIGURED) {
+      resolve(null);
+      return;
+    }
+    initFirebase();
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      unsubscribe();
+      resolve(user);
+    });
+  });
+}
+
+function ensureTeacherAuth() {
+  return new Promise((resolve, reject) => {
+    if (!FIREBASE_CONFIGURED) {
+      reject(new Error("Classroom Mode isn't set up yet — see js/firebase-config.js."));
+      return;
+    }
+    initFirebase();
+    if (!googleProvider) googleProvider = new firebase.auth.GoogleAuthProvider();
+    auth
+      .signInWithPopup(googleProvider)
+      .then((result) => resolve(result.user))
+      .catch(reject);
+  });
+}
+
+function isSignedInTeacher() {
+  return !!(auth && auth.currentUser && !auth.currentUser.isAnonymous);
+}
+
 function generateClassCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous 0/O/1/I
   let code = "";
@@ -68,13 +114,15 @@ function generateClassCode() {
 }
 
 async function createClassInFirestore(className) {
-  const uid = await ensureAuth();
+  if (!isSignedInTeacher()) throw new Error("Sign in first, then host a class.");
+  const uid = auth.currentUser.uid;
   const code = generateClassCode();
   const ref = await db.collection("classes").add({
     name: className,
     code,
     teacherUid: uid,
     active: true,
+    background: "classic",
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
   return { classId: ref.id, code };
@@ -154,6 +202,43 @@ async function endClassInFirestore(classId) {
   await db.collection("classes").doc(classId).update({ active: false });
 }
 
+function listenToClassDoc(classId, callback) {
+  return db
+    .collection("classes")
+    .doc(classId)
+    .onSnapshot((doc) => callback(doc.exists ? { classId: doc.id, ...doc.data() } : null));
+}
+
+async function updateClassBackground(classId, themeId) {
+  await db.collection("classes").doc(classId).update({ background: themeId });
+}
+
+/* Class timer: lives entirely in Firestore (startedAtMs + durationSec, not a
+ * running setInterval anywhere), so it keeps counting down for students
+ * exactly the same whether or not the teacher's tab is still open. */
+async function startClassTimer(classId, durationMin) {
+  await db.collection("classes").doc(classId).update({
+    classTimer: { mode: "pomodoro", durationSec: durationMin * 60, startedAtMs: Date.now(), running: true },
+  });
+}
+
+async function stopClassTimer(classId, currentTimer) {
+  const merged = currentTimer ? { ...currentTimer, running: false } : null;
+  await db.collection("classes").doc(classId).update({ classTimer: merged });
+}
+
+async function listMyClasses() {
+  const uid = auth.currentUser.uid;
+  const snap = await db.collection("classes").where("teacherUid", "==", uid).get();
+  const classes = snap.docs.map((d) => ({ classId: d.id, ...d.data() }));
+  classes.sort((a, b) => {
+    const at = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+    const bt = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+    return bt - at;
+  });
+  return classes;
+}
+
 /* -------------------------------- UI wiring -------------------------------- */
 
 function classroomEl(id) {
@@ -221,26 +306,115 @@ function renderRoster(containerId, students, { highlightUid, isTeacher, classId 
   });
 }
 
+function applyClassroomBackground(screenId, themeId) {
+  const node = classroomEl(screenId);
+  if (!node) return;
+  CLASSROOM_THEMES.forEach((t) => node.classList.remove("classroom-bg-" + t.id));
+  node.classList.add("classroom-bg-" + (themeId || "classic"));
+}
+
+function renderThemePicker(classId, currentTheme) {
+  const wrap = classroomEl("teacher-theme-picker");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  CLASSROOM_THEMES.forEach((t) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "theme-swatch theme-swatch-" + t.id + (t.id === (currentTheme || "classic") ? " active" : "");
+    btn.title = t.label;
+    btn.addEventListener("click", () => {
+      updateClassBackground(classId, t.id).catch((err) => alert("Could not change theme: " + err.message));
+    });
+    wrap.appendChild(btn);
+  });
+}
+
+/* Class timer display/ticking. The countdown is recomputed every second
+ * from the cached classTimer doc data (startedAtMs + durationSec) rather
+ * than driven by any server push, so it ticks smoothly between snapshots. */
+let currentClassTimerData = null;
+let classTimerTickHandle = null;
+
+function formatClassTimer(sec) {
+  const m = Math.floor(sec / 60)
+    .toString()
+    .padStart(2, "0");
+  const s = Math.floor(sec % 60)
+    .toString()
+    .padStart(2, "0");
+  return `${m}:${s}`;
+}
+
+function computeRemainingSec(classTimer) {
+  if (!classTimer || !classTimer.running) return null;
+  const elapsed = Math.floor((Date.now() - classTimer.startedAtMs) / 1000);
+  return Math.max(0, classTimer.durationSec - elapsed);
+}
+
+function renderClassTimerDisplays() {
+  const remaining = computeRemainingSec(currentClassTimerData);
+  const teacherDisplay = classroomEl("teacher-class-timer-display");
+  if (teacherDisplay) {
+    teacherDisplay.textContent = remaining === null ? "Not running" : remaining === 0 ? "Time's up!" : formatClassTimer(remaining);
+  }
+  const studentDisplay = classroomEl("student-class-timer-display");
+  if (studentDisplay) {
+    studentDisplay.textContent =
+      remaining === null ? "" : `⏱ Class focusing — ${remaining === 0 ? "Time's up!" : formatClassTimer(remaining)}`;
+  }
+}
+
+function startClassTimerTicking() {
+  if (classTimerTickHandle) return;
+  classTimerTickHandle = setInterval(renderClassTimerDisplays, 1000);
+}
+
+function stopClassTimerTicking() {
+  if (classTimerTickHandle) {
+    clearInterval(classTimerTickHandle);
+    classTimerTickHandle = null;
+  }
+  currentClassTimerData = null;
+  renderClassTimerDisplays();
+}
+
 function openTeacherDashboard(classId, className, code) {
   showOnlyScreen("screen-classroom-teacher");
   classroomEl("teacher-class-name").textContent = className;
   classroomEl("teacher-class-code").textContent = code;
   if (rosterUnsubscribe) rosterUnsubscribe();
+  if (classDocUnsubscribe) classDocUnsubscribe();
   rosterUnsubscribe = listenToRoster(classId, (students) => {
     renderRoster("teacher-roster", students, { isTeacher: true, classId });
   });
+  classDocUnsubscribe = listenToClassDoc(classId, (classData) => {
+    if (!classData) return;
+    applyClassroomBackground("screen-classroom-teacher", classData.background);
+    renderThemePicker(classId, classData.background);
+    currentClassTimerData = classData.classTimer || null;
+    renderClassTimerDisplays();
+  });
+  startClassTimerTicking();
 }
 
 function openStudentDashboard(classId, className, myUid) {
   showOnlyScreen("screen-classroom-student");
   classroomEl("student-class-name").textContent = className;
   if (rosterUnsubscribe) rosterUnsubscribe();
+  if (classDocUnsubscribe) classDocUnsubscribe();
   rosterUnsubscribe = listenToRoster(classId, (students) => {
     studentRosterCache = students;
     renderRoster("student-roster", students, { highlightUid: myUid });
     const me = students.find((s) => s.uid === myUid);
     classroomEl("student-points").textContent = me ? me.points || 0 : 0;
   });
+  classDocUnsubscribe = listenToClassDoc(classId, (classData) => {
+    if (!classData) return;
+    applyClassroomBackground("screen-classroom-student", classData.background);
+    currentClassTimerData = classData.classTimer || null;
+    renderClassTimerDisplays();
+  });
+  startClassTimerTicking();
 }
 
 function renderClassShop(classId, myUid) {
@@ -284,12 +458,77 @@ function renderClassShop(classId, myUid) {
   });
 }
 
+async function openMyClasses() {
+  showOnlyScreen("screen-my-classes");
+  const user = auth.currentUser;
+  classroomEl("my-classes-signed-in-as").textContent = `Signed in as ${user.email || user.displayName || "you"}`;
+  const list = classroomEl("my-classes-list");
+  list.innerHTML = `<p class="task-empty">Loading your classes…</p>`;
+  try {
+    const classes = await listMyClasses();
+    renderMyClassesList(classes);
+  } catch (err) {
+    list.innerHTML = `<p class="task-empty">Could not load your classes: ${escapeHTML(err.message)}</p>`;
+  }
+}
+
+function renderMyClassesList(classes) {
+  const list = classroomEl("my-classes-list");
+  if (classes.length === 0) {
+    list.innerHTML = `<p class="task-empty">No classes yet — host your first one below.</p>`;
+    return;
+  }
+  list.innerHTML = "";
+  classes.forEach((c) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "my-class-card" + (c.active === false ? " ended" : "");
+    card.innerHTML = `
+      <div class="my-class-name">${escapeHTML(c.name)}</div>
+      <div class="my-class-code">Code: ${escapeHTML(c.code)}</div>
+      ${c.active === false ? '<div class="my-class-status">Closed to new joins</div>' : ""}
+    `;
+    card.addEventListener("click", () => {
+      saveClassroomSession({ role: "teacher", classId: c.classId, code: c.code, className: c.name });
+      openTeacherDashboard(c.classId, c.name, c.code);
+    });
+    list.appendChild(card);
+  });
+}
+
 function wireClassroomEvents() {
   el("btn-classroom").addEventListener("click", openClassroomHome);
   classroomEl("classroom-home-back").addEventListener("click", showSelectScreen);
 
-  classroomEl("btn-host-class").addEventListener("click", () => showOnlyScreen("screen-classroom-host"));
-  classroomEl("host-back").addEventListener("click", openClassroomHome);
+  classroomEl("btn-host-class").addEventListener("click", () => {
+    if (isSignedInTeacher()) {
+      openMyClasses();
+    } else {
+      showOnlyScreen("screen-classroom-teacher-login");
+    }
+  });
+  classroomEl("teacher-login-back").addEventListener("click", openClassroomHome);
+  classroomEl("btn-google-signin").addEventListener("click", async () => {
+    try {
+      await ensureTeacherAuth();
+      openMyClasses();
+    } catch (err) {
+      alert("Could not sign in: " + err.message);
+    }
+  });
+
+  classroomEl("btn-new-class").addEventListener("click", () => showOnlyScreen("screen-classroom-host"));
+  classroomEl("my-classes-back").addEventListener("click", openClassroomHome);
+  classroomEl("btn-teacher-signout").addEventListener("click", async () => {
+    if (rosterUnsubscribe) rosterUnsubscribe();
+    if (classDocUnsubscribe) classDocUnsubscribe();
+    stopClassTimerTicking();
+    await auth.signOut();
+    saveClassroomSession(null);
+    showSelectScreen();
+  });
+
+  classroomEl("host-back").addEventListener("click", () => openMyClasses());
   classroomEl("host-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const name = classroomEl("host-class-name").value.trim();
@@ -297,6 +536,7 @@ function wireClassroomEvents() {
     try {
       const { classId, code } = await createClassInFirestore(name);
       saveClassroomSession({ role: "teacher", classId, code, className: name });
+      classroomEl("host-class-name").value = "";
       openTeacherDashboard(classId, name, code);
     } catch (err) {
       alert("Could not create class: " + err.message);
@@ -333,23 +573,58 @@ function wireClassroomEvents() {
     }
   });
 
+  classroomEl("teacher-back-to-classes").addEventListener("click", () => {
+    if (rosterUnsubscribe) rosterUnsubscribe();
+    if (classDocUnsubscribe) classDocUnsubscribe();
+    stopClassTimerTicking();
+    openMyClasses();
+  });
+
+  document.querySelectorAll(".class-dur-btn").forEach((b) =>
+    b.addEventListener("click", () => {
+      document.querySelectorAll(".class-dur-btn").forEach((x) => x.classList.toggle("active", x === b));
+    })
+  );
+
+  classroomEl("btn-start-class-timer").addEventListener("click", () => {
+    if (!classroomSession) return;
+    const activeDurBtn = document.querySelector(".class-dur-btn.active");
+    const durationMin = activeDurBtn ? Number(activeDurBtn.dataset.min) : 25;
+    startClassTimer(classroomSession.classId, durationMin).catch((err) => {
+      alert("Could not start the class timer: " + err.message);
+    });
+  });
+
+  classroomEl("btn-stop-class-timer").addEventListener("click", () => {
+    if (!classroomSession) return;
+    stopClassTimer(classroomSession.classId, currentClassTimerData).catch((err) => {
+      alert("Could not stop the class timer: " + err.message);
+    });
+  });
+
   classroomEl("teacher-end-class").addEventListener("click", async () => {
     if (!classroomSession) return;
-    const ok = confirm("End this class session? Students will no longer be able to earn or spend points here.");
+    const ok = confirm(
+      "Close this class to new joins? Existing students' points stay saved, and you can keep viewing/awarding points here anytime from My Classes."
+    );
     if (!ok) return;
     try {
       await endClassInFirestore(classroomSession.classId);
     } catch (err) {
-      alert("Could not end class: " + err.message);
+      alert("Could not close class: " + err.message);
       return;
     }
     if (rosterUnsubscribe) rosterUnsubscribe();
+    if (classDocUnsubscribe) classDocUnsubscribe();
+    stopClassTimerTicking();
     saveClassroomSession(null);
-    showSelectScreen();
+    openMyClasses();
   });
 
   classroomEl("student-leave-class").addEventListener("click", () => {
     if (rosterUnsubscribe) rosterUnsubscribe();
+    if (classDocUnsubscribe) classDocUnsubscribe();
+    stopClassTimerTicking();
     saveClassroomSession(null);
     showSelectScreen();
   });
@@ -364,18 +639,25 @@ function wireClassroomEvents() {
 
 function initClassroom() {
   wireClassroomEvents();
-  if (classroomSession && FIREBASE_CONFIGURED) {
+  if (!classroomSession || !FIREBASE_CONFIGURED) return;
+  if (classroomSession.role === "student") {
+    // Students always resume straight back into their class (anonymous identity).
     ensureAuth()
       .then(() => {
-        if (classroomSession.role === "teacher") {
-          openTeacherDashboard(classroomSession.classId, classroomSession.className, classroomSession.code);
-        } else if (classroomSession.role === "student") {
-          openStudentDashboard(classroomSession.classId, classroomSession.className, classroomSession.studentUid);
-        }
+        openStudentDashboard(classroomSession.classId, classroomSession.className, classroomSession.studentUid);
       })
       .catch(() => {
         /* couldn't resume — leave whatever screen app.js's init() already picked */
       });
+  } else if (classroomSession.role === "teacher") {
+    // Teachers only resume if their Google sign-in is still active (never
+    // force anonymous sign-in here — that would silently replace a real
+    // teacher session).
+    waitForAuthReady().then((user) => {
+      if (user && !user.isAnonymous) {
+        openTeacherDashboard(classroomSession.classId, classroomSession.className, classroomSession.code);
+      }
+    });
   }
 }
 

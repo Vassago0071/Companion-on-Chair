@@ -119,9 +119,29 @@
     <button class="ctrl-btn" id="classroom-home-back">Back</button>
   </section>
 
+  <!-- ===================== CLASSROOM: TEACHER LOGIN ===================== -->
+  <section id="screen-classroom-teacher-login" class="screen hidden">
+    <h1>Sign in to host a class</h1>
+    <p class="subtitle">Signing in keeps your classes and their points saved between sessions — reopen any of your classes anytime, from any device.</p>
+    <button class="ctrl-btn primary" id="btn-google-signin">Sign in with Google</button>
+    <button class="ctrl-btn" id="teacher-login-back">Back</button>
+  </section>
+
+  <!-- ===================== CLASSROOM: MY CLASSES ===================== -->
+  <section id="screen-my-classes" class="screen hidden">
+    <h1>My Classes</h1>
+    <p class="subtitle" id="my-classes-signed-in-as"></p>
+    <div id="my-classes-list" class="my-classes-list"></div>
+    <div class="my-classes-actions">
+      <button class="ctrl-btn primary" id="btn-new-class">+ Host New Class</button>
+      <button class="ctrl-btn" id="my-classes-back">Back</button>
+      <button class="ctrl-btn danger" id="btn-teacher-signout">Sign Out</button>
+    </div>
+  </section>
+
   <!-- ===================== CLASSROOM: HOST SETUP ===================== -->
   <section id="screen-classroom-host" class="screen hidden">
-    <h1>Host a Class</h1>
+    <h1>Host a New Class</h1>
     <p class="subtitle">Give your class a name — you'll get a short code to share with students.</p>
     <form id="host-form" class="inline-form">
       <input type="text" id="host-class-name" placeholder="e.g. Period 3 Focus Club" autocomplete="off" required />
@@ -148,13 +168,35 @@
     <h1 id="teacher-class-name">Class</h1>
     <p class="subtitle">Share this code with your students:</p>
     <div class="class-code-display" id="teacher-class-code">------</div>
+    <div class="theme-picker-wrap">
+      <span class="control-label">Room theme</span>
+      <div class="theme-picker" id="teacher-theme-picker"></div>
+    </div>
+    <div class="class-timer-panel">
+      <span class="control-label">Class Timer</span>
+      <div class="class-timer-duration" id="class-timer-duration-row">
+        <button class="class-dur-btn" data-min="15">15m</button>
+        <button class="class-dur-btn active" data-min="25">25m</button>
+        <button class="class-dur-btn" data-min="45">45m</button>
+        <button class="class-dur-btn" data-min="60">60m</button>
+      </div>
+      <div class="class-timer-display" id="teacher-class-timer-display">Not running</div>
+      <div class="class-timer-controls">
+        <button class="ctrl-btn primary" id="btn-start-class-timer">Start Class Timer</button>
+        <button class="ctrl-btn danger" id="btn-stop-class-timer">Stop</button>
+      </div>
+    </div>
     <div id="teacher-roster" class="roster-grid"></div>
-    <button class="ctrl-btn danger" id="teacher-end-class">End Class</button>
+    <div class="teacher-dashboard-actions">
+      <button class="ctrl-btn" id="teacher-back-to-classes">← My Classes</button>
+      <button class="ctrl-btn danger" id="teacher-end-class">Close to New Joins</button>
+    </div>
   </section>
 
   <!-- ===================== CLASSROOM: STUDENT DASHBOARD ===================== -->
   <section id="screen-classroom-student" class="screen hidden">
     <h1 id="student-class-name">Class</h1>
+    <div class="class-timer-display student-class-timer" id="student-class-timer-display"></div>
     <div class="student-points-banner">
       <span>Your points: <strong id="student-points">0</strong> 🏅</span>
       <button class="ctrl-btn primary" id="student-open-shop">Class Shop</button>
