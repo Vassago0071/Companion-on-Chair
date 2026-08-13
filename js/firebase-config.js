@@ -20,12 +20,12 @@
  * See the README's "Classroom Mode" section for more detail.
  */
 const FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID",
+  apiKey: "AIzaSyDALYrKNdyMG_7P2w7itmy7ixs1otFx7uY",
+  authDomain: "companion-on-chair.firebaseapp.com",
+  projectId: "companion-on-chair",
+  storageBucket: "companion-on-chair.firebasestorage.app",
+  messagingSenderId: "245939729492",
+  appId: "1:245939729492:web:3896d6419db81d67c469c1",
 };
 
 const FIREBASE_CONFIGURED = FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY";
