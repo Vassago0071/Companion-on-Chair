@@ -232,6 +232,15 @@ body {
   stroke-linecap: round;
 }
 
+.companion-svg .chair .tuft-button circle {
+  fill: #24406b;
+}
+
+.companion-svg .chair .blanket-check rect {
+  fill: #b9c9dc;
+  opacity: 0.85;
+}
+
 .active-task {
   position: absolute;
   bottom: 14px;

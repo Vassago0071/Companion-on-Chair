@@ -15,9 +15,13 @@ python3 -m http.server 8000
 ## What's included
 
 - **5 companions** to choose from, each an inline SVG sitting on a shared
-  chair, drawn in a bold-outline, flat-cutout style: Momo (cat), Biscuit
-  (corgi), Ember (fox), Sage (owl), Clover (bunny). Switch companions
-  anytime.
+  cozy armchair, drawn in a bold-outline, flat-cutout style: Momo (cat),
+  Biscuit (corgi), Ember (fox), Sage (owl), Clover (bunny). Switch
+  companions anytime.
+- **Kids Mode**: swap the animal roster for 5 original blocky mini-figure
+  characters (Robo, Scout, Captain Pip, Blaze, Shieldy) — an original take
+  on the "blocky voxel avatar" genre, not a recreation of any specific
+  game's characters or branding. Toggle from the top bar.
 - **Customization** at pick-time (and anytime after via the "Customize"
   button): color palette, size, age (young/adult/elder, with matching
   visual cues like blush cheeks or glasses), and temperament
@@ -39,8 +43,9 @@ python3 -m http.server 8000
 - `index.html` — screens and modals (companion picker, customize screen,
   focus room, shop, tasks, stats, reward popup).
 - `css/style.css` — warm, flat-cutout visual theme.
-- `js/companions.js` — companion roster, customization options (palettes,
-  sizes, ages, temperaments), and the SVG chair/character renderer.
+- `js/companions.js` — animal and Kids Mode rosters, customization options
+  (palettes, sizes, ages, temperaments), and the SVG armchair/character
+  renderers.
 - `js/app.js` — timer logic, rewards, shop, tasks, customization, and
   persistence.
 
@@ -50,4 +55,7 @@ The companion illustrations and "Companion on Chair" branding here are
 original to this project. The bold-outline, flat-cutout look is a general
 animation *style* choice (thick outlines, oversized eyes, simple flat
 shapes) — the specific characters, names, and artwork are original, not
-reused from any third-party show or app.
+reused from any third-party show or app. Likewise, Kids Mode's blocky
+mini-figures are an original design in the general "blocky voxel avatar"
+genre shared by many games — not a recreation of any specific game's
+characters, name, or branding.

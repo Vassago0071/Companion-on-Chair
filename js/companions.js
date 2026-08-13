@@ -8,6 +8,7 @@ const COMPANIONS = [
     id: "cat",
     name: "Momo",
     species: "Cat",
+    kind: "animal",
     tagline: "A calm tabby who purrs while you type.",
     colors: { body: "#e8935a", belly: "#fff3e2", accent: "#c96f36" },
   },
@@ -15,6 +16,7 @@ const COMPANIONS = [
     id: "dog",
     name: "Biscuit",
     species: "Corgi",
+    kind: "animal",
     tagline: "An eager pup who guards your deadlines.",
     colors: { body: "#e9b976", belly: "#fff8ec", accent: "#c98a3a" },
   },
@@ -22,6 +24,7 @@ const COMPANIONS = [
     id: "fox",
     name: "Ember",
     species: "Fox",
+    kind: "animal",
     tagline: "A quiet fox that keeps one eye on the clock.",
     colors: { body: "#e8683f", belly: "#fff6ee", accent: "#a83e22" },
   },
@@ -29,6 +32,7 @@ const COMPANIONS = [
     id: "owl",
     name: "Sage",
     species: "Owl",
+    kind: "animal",
     tagline: "A night-shift owl who never seems to blink.",
     colors: { body: "#8d7a9e", belly: "#f1ecf7", accent: "#5e4c72" },
   },
@@ -36,13 +40,66 @@ const COMPANIONS = [
     id: "bunny",
     name: "Clover",
     species: "Bunny",
+    kind: "animal",
     tagline: "A soft-footed bunny who thumps when the timer ends.",
     colors: { body: "#f4c9d6", belly: "#fff5f8", accent: "#d98ba3" },
   },
 ];
 
+/* Kids Mode roster: original blocky mini-figure characters (cylinder head,
+   block body — the general "voxel avatar" genre shared by many building
+   games) with entirely original names, outfits and colors. Not a
+   recreation of any specific game's characters or branding. */
+const KID_AVATARS = [
+  {
+    id: "robo",
+    name: "Robo",
+    species: "Robot",
+    kind: "avatar",
+    tagline: "A friendly little robot who beeps encouragement.",
+    colors: { primary: "#8fa3ad", secondary: "#5c6b73", head: "#c7d3d8", trim: "#2f3b40" },
+  },
+  {
+    id: "scout",
+    name: "Scout",
+    species: "Explorer",
+    kind: "avatar",
+    tagline: "Always ready for the next quest — or the next task.",
+    colors: { primary: "#5b8c5a", secondary: "#3f5c3a", head: "#f2c9a0", trim: "#2e4029" },
+  },
+  {
+    id: "captain",
+    name: "Captain Pip",
+    species: "Voyager",
+    kind: "avatar",
+    tagline: "Sails a desk instead of the seven seas.",
+    colors: { primary: "#a8332c", secondary: "#3a2c22", head: "#f2c9a0", trim: "#7a231d" },
+  },
+  {
+    id: "blaze",
+    name: "Blaze",
+    species: "Athlete",
+    kind: "avatar",
+    tagline: "Treats every Pomodoro like a game to win.",
+    colors: { primary: "#2b6fb0", secondary: "#26344a", head: "#f2c9a0", trim: "#d94f3d" },
+  },
+  {
+    id: "shieldy",
+    name: "Shieldy",
+    species: "Knight",
+    kind: "avatar",
+    tagline: "Guards your focus like a castle gate.",
+    colors: { primary: "#c9a227", secondary: "#8a6c1c", head: "#c9a227", trim: "#6e4b0e" },
+  },
+];
+
 function getCompanion(id) {
-  return COMPANIONS.find((c) => c.id === id) || COMPANIONS[0];
+  return [...COMPANIONS, ...KID_AVATARS].find((c) => c.id === id) || COMPANIONS[0];
+}
+
+/** Dispatches to the right renderer based on the companion's kind. */
+function renderCompanionArt(companion, state, custom) {
+  return companion.kind === "avatar" ? avatarSVG(companion, state, custom) : companionSVG(companion, state, custom);
 }
 
 /* Customization options, shared across all species. */
@@ -82,15 +139,35 @@ function resolveColors(companion, colorId) {
   return palette && palette.colors ? palette.colors : companion.colors;
 }
 
-/* Shared wooden chair, drawn once and reused under every companion. */
+function resolveAvatarColors(companion, colorId) {
+  const c = companion.colors;
+  const palette = PALETTES.find((p) => p.id === colorId);
+  if (!palette || !palette.colors) return c;
+  return { ...c, primary: palette.colors.body, secondary: palette.colors.accent };
+}
+
+/* Shared cozy armchair, drawn once and reused under every companion. */
 function chairSVG() {
   return `
     <g class="chair">
-      <rect class="ol" x="70" y="150" width="14" height="70" rx="4" fill="#8a5a3b"/>
-      <rect class="ol" x="196" y="150" width="14" height="70" rx="4" fill="#8a5a3b"/>
-      <rect class="ol" x="60" y="140" width="160" height="18" rx="6" fill="#a06b45"/>
-      <rect class="ol" x="60" y="40" width="16" height="110" rx="6" fill="#8a5a3b"/>
-      <rect class="ol" x="66" y="44" width="4" height="96" rx="2" fill="#6f4730"/>
+      <rect class="ol" x="88" y="204" width="12" height="22" rx="4" fill="#7a5636"/>
+      <rect class="ol" x="180" y="204" width="12" height="22" rx="4" fill="#7a5636"/>
+      <ellipse class="ol" cx="64" cy="152" rx="34" ry="48" fill="#3b5f92"/>
+      <ellipse class="ol" cx="216" cy="152" rx="34" ry="48" fill="#3b5f92"/>
+      <rect class="ol" x="58" y="54" width="164" height="132" rx="44" fill="#3b5f92"/>
+      <g class="tuft-button">
+        <circle cx="112" cy="98" r="3"/>
+        <circle cx="168" cy="98" r="3"/>
+        <circle cx="140" cy="130" r="3"/>
+      </g>
+      <ellipse class="ol" cx="140" cy="182" rx="96" ry="34" fill="#5b82b8"/>
+      <path class="ol" d="M206 142 L238 130 L240 178 L210 190 Z" fill="#f4ede0"/>
+      <g class="blanket-check">
+        <rect x="212" y="140" width="9" height="9"/>
+        <rect x="226" y="135" width="9" height="9"/>
+        <rect x="214" y="158" width="9" height="9"/>
+        <rect x="228" y="153" width="9" height="9"/>
+      </g>
     </g>
   `;
 }
@@ -267,6 +344,148 @@ function companionSVG(companion, state, custom) {
           ${f.nose || ""}
           ${mouth}
           ${f.muzzle || ""}
+          ${sleepyZ}
+        </g>
+      </g>
+    </g>
+  </svg>`;
+}
+
+/* Species-specific hat/accessory + emblem for the blocky avatar roster. */
+function avatarFeatures(species, colors) {
+  switch (species) {
+    case "Robot":
+      return {
+        headFill: colors.head,
+        robotFace: true,
+        headExtra: `
+          <rect class="ol" x="136" y="42" width="8" height="18" fill="${colors.trim}"/>
+          <circle class="ol" cx="140" cy="40" r="6" fill="${colors.trim}"/>
+        `,
+        torsoExtra: `<rect class="ol" x="122" y="132" width="36" height="14" rx="4" fill="${colors.trim}"/>`,
+      };
+    case "Explorer":
+      return {
+        headFill: colors.head,
+        headExtra: `<path class="ol" d="M108 66 Q140 44 172 66 L172 76 Q140 60 108 76 Z" fill="${colors.trim}"/>`,
+        torsoExtra: `
+          <path class="ol" d="M104 122 L124 160" stroke="${colors.trim}" stroke-width="6" fill="none" stroke-linecap="round"/>
+          <path class="ol" d="M176 122 L156 160" stroke="${colors.trim}" stroke-width="6" fill="none" stroke-linecap="round"/>
+        `,
+      };
+    case "Voyager":
+      return {
+        headFill: colors.head,
+        headExtra: `<path class="ol" d="M104 62 Q140 30 176 62 Q160 50 140 54 Q120 50 104 62 Z" fill="${colors.trim}"/>`,
+        torsoExtra: `<rect class="ol" x="130" y="150" width="20" height="14" rx="3" fill="${colors.trim}"/>`,
+      };
+    case "Athlete":
+      return {
+        headFill: colors.head,
+        headExtra: `
+          <path class="ol" d="M106 64 Q140 38 174 64 Q174 54 140 50 Q106 54 106 64 Z" fill="${colors.trim}"/>
+          <path class="ol" d="M170 58 Q186 58 186 68 Q176 68 170 64 Z" fill="${colors.trim}"/>
+        `,
+        torsoExtra: `<circle class="ol" cx="140" cy="150" r="10" fill="${colors.trim}"/>`,
+      };
+    case "Knight":
+      return {
+        headFill: colors.trim,
+        helmet: true,
+        headExtra: `<path class="ol" d="M132 44 L140 22 L148 44 Z" fill="#a83e3e"/>`,
+        torsoExtra: `
+          <circle class="ol" cx="140" cy="150" r="11" fill="${colors.primary}"/>
+          <circle cx="140" cy="150" r="5" fill="${colors.trim}"/>
+        `,
+      };
+    default:
+      return { headFill: colors.head };
+  }
+}
+
+/**
+ * Renders a blocky mini-figure companion sitting on the chair (Kids Mode).
+ * Same signature/coordinate system as companionSVG so the two are interchangeable.
+ */
+function avatarSVG(companion, state, custom) {
+  const cust = Object.assign(defaultCustomization(), custom || {});
+  const c = resolveAvatarColors(companion, cust.colorId);
+  const f = avatarFeatures(companion.species, c);
+  const blink = state === "sleep";
+
+  const sizeScale = (SIZES.find((s) => s.id === cust.sizeId) || SIZES[1]).scale;
+  const headScale = cust.ageId === "young" ? 1.14 : cust.ageId === "elder" ? 1.02 : 1;
+  const torsoScale = cust.ageId === "young" ? 0.9 : cust.ageId === "elder" ? 1.04 : 1;
+
+  const sleepy = cust.temperamentId === "sleepy";
+  const grumpy = cust.temperamentId === "grumpy";
+  const playful = cust.temperamentId === "playful";
+  const sleepyEyes = blink || sleepy;
+
+  let face;
+  if (f.helmet) {
+    face = `<rect class="ol" x="118" y="82" width="44" height="12" rx="4" fill="#18110b"/>`;
+  } else if (f.robotFace) {
+    face = sleepyEyes
+      ? `<rect x="122" y="86" width="14" height="4" fill="#18110b"/><rect x="144" y="86" width="14" height="4" fill="#18110b"/>`
+      : `<rect class="ol" x="122" y="80" width="14" height="14" rx="3" fill="#7fe0e8"/><rect class="ol" x="144" y="80" width="14" height="14" rx="3" fill="#7fe0e8"/>`;
+    face += `<rect x="130" y="102" width="20" height="4" fill="#18110b"/>`;
+  } else {
+    face = sleepyEyes
+      ? `<path class="ol" d="M120 86 q8 6 16 0" stroke="#18110b" stroke-width="3" fill="none" stroke-linecap="round"/>
+         <path class="ol" d="M144 86 q8 6 16 0" stroke="#18110b" stroke-width="3" fill="none" stroke-linecap="round"/>`
+      : `<circle cx="128" cy="86" r="4.5" fill="#18110b"/><circle cx="152" cy="86" r="4.5" fill="#18110b"/>`;
+    let mouth;
+    if (grumpy) mouth = `<path class="mouth" d="M126 106 Q140 98 154 106"/>`;
+    else if (playful) mouth = `<path class="mouth" d="M122 98 Q140 114 158 98"/>`;
+    else mouth = `<path class="mouth" d="M126 100 Q140 108 154 100"/>`;
+    face += mouth;
+  }
+
+  const eyebrows =
+    !f.robotFace && !f.helmet && grumpy
+      ? `<path class="mouth" d="M116 74 L134 80"/><path class="mouth" d="M164 74 L146 80"/>`
+      : "";
+
+  const glasses =
+    !f.helmet && cust.ageId === "elder"
+      ? `<g class="glasses"><circle cx="128" cy="86" r="14"/><circle cx="152" cy="86" r="14"/><line x1="142" y1="84" x2="138" y2="84"/></g>`
+      : "";
+
+  const blush =
+    cust.ageId === "young"
+      ? `<circle cx="112" cy="98" r="6" fill="#ffb3c0" opacity="0.55"/><circle cx="168" cy="98" r="6" fill="#ffb3c0" opacity="0.55"/>`
+      : "";
+
+  const sleepyZ = sleepy
+    ? `<text x="176" y="44" font-size="18" fill="#8a7360" transform="rotate(-10 176 44)">z</text>`
+    : "";
+
+  return `
+  <svg viewBox="0 0 240 230" class="companion-svg companion-${state} temperament-${cust.temperamentId}" xmlns="http://www.w3.org/2000/svg">
+    <ellipse class="floor-shadow" cx="140" cy="222" rx="92" ry="9"/>
+    ${chairSVG()}
+    <g transform="translate(140 222) scale(${sizeScale}) translate(-140 -222)">
+      <g class="companion-body">
+        <g transform="translate(140 156) scale(${torsoScale}) translate(-140 -156)">
+          <rect class="ol" x="82" y="180" width="26" height="34" rx="8" fill="${c.secondary}"/>
+          <rect class="ol" x="172" y="180" width="26" height="34" rx="8" fill="${c.secondary}"/>
+          <rect class="ol" x="80" y="206" width="30" height="12" rx="4" fill="#2e2b28"/>
+          <rect class="ol" x="170" y="206" width="30" height="12" rx="4" fill="#2e2b28"/>
+          <rect class="ol" x="78" y="128" width="26" height="56" rx="10" fill="${c.primary}"/>
+          <rect class="ol" x="176" y="128" width="26" height="56" rx="10" fill="${c.primary}"/>
+          <rect class="ol" x="100" y="120" width="80" height="66" rx="16" fill="${c.primary}"/>
+          ${f.torsoExtra || ""}
+          <circle class="ol" cx="91" cy="182" r="11" fill="${c.head}"/>
+          <circle class="ol" cx="189" cy="182" r="11" fill="${c.head}"/>
+        </g>
+        <g transform="translate(140 88) scale(${headScale}) translate(-140 -88)">
+          <rect class="ol" x="112" y="58" width="56" height="60" rx="16" fill="${f.headFill}"/>
+          ${f.headExtra || ""}
+          ${blush}
+          ${face}
+          ${eyebrows}
+          ${glasses}
           ${sleepyZ}
         </g>
       </g>
