@@ -159,6 +159,8 @@ async function joinClassInFirestore(classId, displayName) {
       customization,
       points: 0,
       ownedDecor: [],
+      ownedAccessories: [],
+      equippedAccessories: {},
       joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
   }
@@ -197,6 +199,47 @@ async function buyClassDecor(classId, studentUid, item) {
     const ownedDecor = [...(data.ownedDecor || []), item.id];
     tx.update(ref, { points, ownedDecor });
     return { status: "bought", points, ownedDecor };
+  });
+}
+
+async function buyClassAccessory(classId, studentUid, item) {
+  const ref = db.collection("classes").doc(classId).collection("students").doc(studentUid);
+  return db.runTransaction(async (tx) => {
+    const doc = await tx.get(ref);
+    const data = doc.data();
+    if (!data) throw new Error("not-in-class");
+    const ownedAccessories = data.ownedAccessories || [];
+    if (ownedAccessories.includes(item.id)) {
+      return { status: "owned", points: data.points, ownedAccessories, equippedAccessories: data.equippedAccessories || {} };
+    }
+    if ((data.points || 0) < item.price) throw new Error("not-enough-points");
+    const points = data.points - item.price;
+    const nextOwned = [...ownedAccessories, item.id];
+    // Buying an item equips it immediately -- one purchase, one visible result.
+    const equippedAccessories = { ...(data.equippedAccessories || {}), [item.slot]: item.id };
+    tx.update(ref, { points, ownedAccessories: nextOwned, equippedAccessories });
+    return { status: "bought", points, ownedAccessories: nextOwned, equippedAccessories };
+  });
+}
+
+async function equipAccessory(classId, studentUid, item) {
+  const ref = db.collection("classes").doc(classId).collection("students").doc(studentUid);
+  return db.runTransaction(async (tx) => {
+    const doc = await tx.get(ref);
+    const data = doc.data();
+    if (!data) throw new Error("not-in-class");
+    const ownedAccessories = data.ownedAccessories || [];
+    if (!ownedAccessories.includes(item.id)) throw new Error("not-owned");
+    const current = data.equippedAccessories || {};
+    const isEquipped = current[item.slot] === item.id;
+    const equippedAccessories = { ...current };
+    if (isEquipped) {
+      delete equippedAccessories[item.slot];
+    } else {
+      equippedAccessories[item.slot] = item.id;
+    }
+    tx.update(ref, { equippedAccessories });
+    return { status: isEquipped ? "unequipped" : "equipped", equippedAccessories };
   });
 }
 
@@ -331,11 +374,12 @@ function renderRoster(containerId, students, { highlightUid, isTeacher, classId 
   }
   students.forEach((s, idx) => {
     const companion = getCompanion(s.companionId);
+    const artCustom = { ...s.customization, accessories: s.equippedAccessories || {} };
     const card = document.createElement("div");
     card.className = "roster-card" + (s.uid === highlightUid ? " me" : "");
     card.innerHTML = `
       <div class="roster-rank">#${idx + 1}</div>
-      <div class="roster-art">${renderCompanionArt(companion, "idle", s.customization)}</div>
+      <div class="roster-art">${renderCompanionArt(companion, "idle", artCustom)}</div>
       <div class="roster-name">${escapeHTML(s.name || "Student")}</div>
       <div class="roster-points">${s.points || 0} 🏅</div>
       ${
@@ -564,6 +608,62 @@ function renderClassShop(classId, myUid) {
   });
 }
 
+function renderClassAccessoriesShop(classId, myUid) {
+  const grid = classroomEl("class-shop-accessories-grid");
+  const me = studentRosterCache.find((s) => s.uid === myUid);
+  const myPoints = me ? me.points || 0 : 0;
+  const owned = me ? me.ownedAccessories || [] : [];
+  const equipped = me ? me.equippedAccessories || {} : {};
+  classroomEl("class-shop-points").textContent = myPoints;
+  grid.innerHTML = "";
+  ACCESSORY_CATALOG.forEach((item) => {
+    const isOwned = owned.includes(item.id);
+    const isEquipped = equipped[item.slot] === item.id;
+    const card = document.createElement("div");
+    card.className = "shop-card" + (isOwned ? " owned" : "") + (isEquipped ? " equipped" : "");
+    card.innerHTML = `
+      <div class="shop-icon">${item.icon}</div>
+      <div class="shop-name">${item.name}</div>
+      <div class="shop-price">${isOwned ? (isEquipped ? "Equipped" : "Owned") : `🏅 ${item.price}`}</div>
+      <button class="ctrl-btn ${isOwned && !isEquipped ? "primary" : ""}" ${isEquipped ? "disabled" : ""}>${
+      isOwned ? (isEquipped ? "Equipped" : "Wear") : "Buy"
+    }</button>
+    `;
+    const btn = card.querySelector("button");
+    if (!isEquipped) {
+      btn.addEventListener("click", async () => {
+        try {
+          const cached = studentRosterCache.find((s) => s.uid === myUid);
+          if (isOwned) {
+            const result = await equipAccessory(classId, myUid, item);
+            if (cached) cached.equippedAccessories = result.equippedAccessories;
+          } else {
+            const result = await buyClassAccessory(classId, myUid, item);
+            if (cached) {
+              cached.points = result.points;
+              cached.ownedAccessories = result.ownedAccessories;
+              cached.equippedAccessories = result.equippedAccessories;
+            }
+            classroomEl("student-points").textContent = result.points;
+          }
+          renderClassAccessoriesShop(classId, myUid);
+          renderRoster("student-roster", studentRosterCache, { highlightUid: myUid });
+        } catch (err) {
+          alert(err.message === "not-enough-points" ? "Not enough class points yet." : "Could not do that.");
+        }
+      });
+    }
+    grid.appendChild(card);
+  });
+}
+
+function switchClassShopTab(tab) {
+  classroomEl("class-shop-grid").classList.toggle("hidden", tab !== "decor");
+  classroomEl("class-shop-accessories-grid").classList.toggle("hidden", tab !== "accessories");
+  classroomEl("class-shop-tab-decor").classList.toggle("active", tab === "decor");
+  classroomEl("class-shop-tab-accessories").classList.toggle("active", tab === "accessories");
+}
+
 async function openMyClasses() {
   showOnlyScreen("screen-my-classes");
   const user = auth.currentUser;
@@ -738,9 +838,13 @@ function wireClassroomEvents() {
   classroomEl("student-open-shop").addEventListener("click", () => {
     if (!classroomSession) return;
     renderClassShop(classroomSession.classId, classroomSession.studentUid);
+    renderClassAccessoriesShop(classroomSession.classId, classroomSession.studentUid);
+    switchClassShopTab("decor");
     openModal("modal-class-shop");
   });
   classroomEl("class-shop-close").addEventListener("click", () => closeModal("modal-class-shop"));
+  classroomEl("class-shop-tab-decor").addEventListener("click", () => switchClassShopTab("decor"));
+  classroomEl("class-shop-tab-accessories").addEventListener("click", () => switchClassShopTab("accessories"));
 
   classroomEl("btn-save-lesson-notes").addEventListener("click", () => {
     if (!classroomSession) return;

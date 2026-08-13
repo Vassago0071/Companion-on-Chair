@@ -43,7 +43,8 @@ service cloud.firestore {
           (
             request.auth.uid == studentUid &&
             request.resource.data.points <= resource.data.points &&
-            request.resource.data.ownedDecor.size() >= resource.data.ownedDecor.size()
+            request.resource.data.ownedDecor.size() >= resource.data.ownedDecor.size() &&
+            request.resource.data.get('ownedAccessories', []).size() >= resource.data.get('ownedAccessories', []).size()
           )
         );
         allow delete: if false;

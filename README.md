@@ -30,9 +30,9 @@ python3 -m http.server 8000
   Switch companions anytime.
 - **Customization** at pick-time (and anytime after via the "Customize"
   button): color palette, size, age (young/adult/elder, with matching
-  visual cues like blush cheeks or glasses), and temperament
+  visual cues like blush cheeks or glasses), temperament
   (calm/playful/grumpy/sleepy, which changes their expression and idle
-  animation pace).
+  animation pace), and a chair color for the shared armchair itself.
 - **Pomodoro mode** (15/25/45/60 min) and **count-up (flowtime) mode**.
 - **Rewards**: finishing a session earns a random gift and fish; giving up
   early only nets virtual trash and no fish.

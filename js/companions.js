@@ -180,8 +180,163 @@ const TEMPERAMENTS = [
   { id: "sleepy", label: "Sleepy", icon: "😴" },
 ];
 
+/* Hair isn't independently colorable — character color already covers that. */
+const DEFAULT_HAIR_COLOR = "#5b3a22";
+
+const CHAIR_COLORS = [
+  { id: "blue", label: "Blue", body: "#3b5f92", cushion: "#5b82b8", tuft: "#24406b", blanket: "#b9c9dc" },
+  { id: "blush", label: "Blush", body: "#b8637a", cushion: "#d492a8", tuft: "#8a3f56", blanket: "#f0c3d1" },
+  { id: "sage", label: "Sage", body: "#5c7a52", cushion: "#82a374", tuft: "#3f5c37", blanket: "#c3d9b8" },
+  { id: "charcoal", label: "Charcoal", body: "#4a4a4d", cushion: "#6b6b6f", tuft: "#2c2c2e", blanket: "#c9c8ca" },
+  { id: "mustard", label: "Mustard", body: "#c98f2b", cushion: "#e0ac4c", tuft: "#8f5f16", blanket: "#f0d9a3" },
+];
+
 function defaultCustomization() {
-  return { colorId: "classic", sizeId: "medium", ageId: "adult", temperamentId: "calm" };
+  return {
+    colorId: "classic",
+    sizeId: "medium",
+    ageId: "adult",
+    temperamentId: "calm",
+    chairColorId: "blue",
+    accessories: {},
+  };
+}
+
+/* Class-shop accessory catalog (purchased with class points in Classroom
+ * Mode — see classroom.js). Each item slots into one of a handful of
+ * generic attach zones shared by every companion's shared coordinate
+ * system, so one render function per item works across the whole roster.
+ * `render` optionally receives a hair color (used by "haircut" items). */
+const ACCESSORY_CATALOG = [
+  {
+    id: "hat-tophat",
+    slot: "hat",
+    zone: "head",
+    name: "Top Hat",
+    icon: "🎩",
+    price: 10,
+    render: () => `<path class="ol" d="M116 42 L164 42 L164 32 L116 32 Z" fill="#221a15"/><rect class="ol" x="125" y="8" width="30" height="28" rx="3" fill="#221a15"/>`,
+  },
+  {
+    id: "hat-party",
+    slot: "hat",
+    zone: "head",
+    name: "Party Hat",
+    icon: "🎉",
+    price: 8,
+    render: () => `<path class="ol" d="M140 6 L120 40 L160 40 Z" fill="#e8452f"/><circle class="ol" cx="140" cy="6" r="4" fill="#f0c419"/>`,
+  },
+  {
+    id: "glasses-round",
+    slot: "glasses",
+    zone: "head",
+    name: "Round Glasses",
+    icon: "👓",
+    price: 6,
+    render: () => `<g class="glasses"><circle cx="122" cy="88" r="15"/><circle cx="158" cy="88" r="15"/><line x1="137" y1="86" x2="143" y2="86"/></g>`,
+  },
+  {
+    id: "glasses-star",
+    slot: "glasses",
+    zone: "head",
+    name: "Star Glasses",
+    icon: "🌟",
+    price: 8,
+    render: () =>
+      `<g class="glasses" style="stroke:#e8788a"><circle cx="122" cy="88" r="15"/><circle cx="158" cy="88" r="15"/><line x1="137" y1="86" x2="143" y2="86"/></g>`,
+  },
+  {
+    id: "earring-hoop",
+    slot: "earring",
+    zone: "head",
+    name: "Gold Hoop",
+    icon: "💍",
+    price: 5,
+    render: () => `<circle class="ol" cx="106" cy="100" r="6" fill="none" stroke="#e8c873" stroke-width="3"/>`,
+  },
+  {
+    id: "hairclip-bow",
+    slot: "hairclip",
+    zone: "head",
+    name: "Bow Clip",
+    icon: "🎀",
+    price: 5,
+    render: () =>
+      `<path class="ol" d="M158 50 L172 42 L172 58 Z" fill="#e8788a"/><path class="ol" d="M158 50 L144 42 L144 58 Z" fill="#e8788a"/><circle class="ol" cx="158" cy="50" r="4" fill="#c96f8a"/>`,
+  },
+  {
+    id: "haircut-spiky",
+    slot: "haircut",
+    zone: "head",
+    name: "Spiky Hair",
+    icon: "💇",
+    price: 8,
+    render: (hairColor) =>
+      `<path class="ol" d="M112 60 L118 28 L126 52 L134 20 L140 50 L146 20 L154 52 L162 28 L168 60 Z" fill="${hairColor}"/>`,
+  },
+  {
+    id: "haircut-long",
+    slot: "haircut",
+    zone: "head",
+    name: "Long Hair",
+    icon: "💁",
+    price: 8,
+    render: (hairColor) =>
+      `<path class="ol" d="M108 62 Q104 100 112 130 L124 130 Q116 90 118 62 Z" fill="${hairColor}"/><path class="ol" d="M172 62 Q176 100 168 130 L156 130 Q164 90 162 62 Z" fill="${hairColor}"/><path class="ol" d="M110 60 Q110 34 140 32 Q170 34 170 60 L162 60 Q162 44 140 44 Q118 44 118 60 Z" fill="${hairColor}"/>`,
+  },
+  { id: "eyecolor-blue", slot: "eyecolor", zone: "eyes", name: "Blue Eyes", icon: "🔵", price: 4, eyeColor: "#3a7bd5" },
+  { id: "eyecolor-green", slot: "eyecolor", zone: "eyes", name: "Green Eyes", icon: "🟢", price: 4, eyeColor: "#4a9c5c" },
+  { id: "eyecolor-violet", slot: "eyecolor", zone: "eyes", name: "Violet Eyes", icon: "🟣", price: 4, eyeColor: "#8d5fd3" },
+  {
+    id: "necklace-chain",
+    slot: "necklace",
+    zone: "torso",
+    name: "Gold Chain",
+    icon: "📿",
+    price: 6,
+    render: () =>
+      `<path d="M118 120 Q140 132 162 120" fill="none" stroke="#e8c873" stroke-width="4"/><circle class="ol" cx="140" cy="130" r="5" fill="#e8c873"/>`,
+  },
+  {
+    id: "scarf-red",
+    slot: "scarf",
+    zone: "torso",
+    name: "Red Scarf",
+    icon: "🧣",
+    price: 6,
+    render: () =>
+      `<path class="ol" d="M104 118 Q140 132 176 118 L176 130 Q140 144 104 130 Z" fill="#c9432f"/><path class="ol" d="M150 128 L158 160 L142 160 Z" fill="#c9432f"/>`,
+  },
+  {
+    id: "tie-blue",
+    slot: "tie",
+    zone: "torso",
+    name: "Blue Tie",
+    icon: "👔",
+    price: 5,
+    render: () => `<path class="ol" d="M132 122 L148 122 L152 138 L140 168 L128 138 Z" fill="#2b6fb0"/>`,
+  },
+  {
+    id: "shoes-red",
+    slot: "shoes",
+    zone: "torso",
+    name: "Red Sneakers",
+    icon: "👟",
+    price: 5,
+    render: () =>
+      `<rect class="ol" x="80" y="206" width="30" height="12" rx="4" fill="#c9432f"/><rect class="ol" x="170" y="206" width="30" height="12" rx="4" fill="#c9432f"/>` +
+      `<ellipse class="ol" cx="110" cy="184" rx="15" ry="11" fill="#c9432f" opacity="0.001"/>`,
+  },
+];
+
+function getAccessory(id) {
+  return ACCESSORY_CATALOG.find((a) => a.id === id) || null;
+}
+
+function equippedAccessoryItems(accessories) {
+  return Object.values(accessories || {})
+    .map((id) => getAccessory(id))
+    .filter(Boolean);
 }
 
 function resolveColors(companion, colorId) {
@@ -196,27 +351,29 @@ function resolveAvatarColors(companion, colorId) {
   return { ...c, primary: palette.colors.body, secondary: palette.colors.accent };
 }
 
-/* Shared cozy armchair, drawn once and reused under every companion. */
-function chairSVG() {
+/* Shared cozy armchair, drawn once and reused under every companion.
+ * `chairColorId` picks a fabric palette from CHAIR_COLORS. */
+function chairSVG(chairColorId) {
+  const palette = CHAIR_COLORS.find((c) => c.id === chairColorId) || CHAIR_COLORS[0];
   return `
     <g class="chair">
       <rect class="ol" x="88" y="204" width="12" height="22" rx="4" fill="#7a5636"/>
       <rect class="ol" x="180" y="204" width="12" height="22" rx="4" fill="#7a5636"/>
-      <ellipse class="ol" cx="64" cy="152" rx="34" ry="48" fill="#3b5f92"/>
-      <ellipse class="ol" cx="216" cy="152" rx="34" ry="48" fill="#3b5f92"/>
-      <rect class="ol" x="58" y="54" width="164" height="132" rx="44" fill="#3b5f92"/>
+      <ellipse class="ol" cx="64" cy="152" rx="34" ry="48" fill="${palette.body}"/>
+      <ellipse class="ol" cx="216" cy="152" rx="34" ry="48" fill="${palette.body}"/>
+      <rect class="ol" x="58" y="54" width="164" height="132" rx="44" fill="${palette.body}"/>
       <g class="tuft-button">
-        <circle cx="112" cy="98" r="3"/>
-        <circle cx="168" cy="98" r="3"/>
-        <circle cx="140" cy="130" r="3"/>
+        <circle cx="112" cy="98" r="3" fill="${palette.tuft}"/>
+        <circle cx="168" cy="98" r="3" fill="${palette.tuft}"/>
+        <circle cx="140" cy="130" r="3" fill="${palette.tuft}"/>
       </g>
-      <ellipse class="ol" cx="140" cy="182" rx="96" ry="34" fill="#5b82b8"/>
+      <ellipse class="ol" cx="140" cy="182" rx="96" ry="34" fill="${palette.cushion}"/>
       <path class="ol" d="M206 142 L238 130 L240 178 L210 190 Z" fill="#f4ede0"/>
       <g class="blanket-check">
-        <rect x="212" y="140" width="9" height="9"/>
-        <rect x="226" y="135" width="9" height="9"/>
-        <rect x="214" y="158" width="9" height="9"/>
-        <rect x="228" y="153" width="9" height="9"/>
+        <rect x="212" y="140" width="9" height="9" fill="${palette.blanket}"/>
+        <rect x="226" y="135" width="9" height="9" fill="${palette.blanket}"/>
+        <rect x="214" y="158" width="9" height="9" fill="${palette.blanket}"/>
+        <rect x="228" y="153" width="9" height="9" fill="${palette.blanket}"/>
       </g>
     </g>
   `;
@@ -300,7 +457,7 @@ function speciesFeatures(species, colors) {
 /**
  * Renders a companion sitting on the chair as an inline SVG string.
  * state: "idle" | "focus" | "sleep"
- * custom: { colorId, sizeId, ageId, temperamentId } — see defaultCustomization()
+ * custom: { colorId, sizeId, ageId, temperamentId, chairColorId } — see defaultCustomization()
  */
 function companionSVG(companion, state, custom) {
   const cust = Object.assign(defaultCustomization(), custom || {});
@@ -319,6 +476,18 @@ function companionSVG(companion, state, custom) {
   const grumpy = cust.temperamentId === "grumpy";
   const playful = cust.temperamentId === "playful";
 
+  const equipped = equippedAccessoryItems(cust.accessories);
+  const eyecolorItem = equipped.find((a) => a.slot === "eyecolor");
+  const pupilColor = eyecolorItem ? eyecolorItem.eyeColor : "#18110b";
+  const headAccessories = equipped
+    .filter((a) => a.zone === "head" && a.slot !== "haircut")
+    .map((a) => a.render())
+    .join("");
+  const torsoAccessories = equipped
+    .filter((a) => a.zone === "torso")
+    .map((a) => a.render())
+    .join("");
+
   let eyes;
   if (blink) {
     eyes = `
@@ -328,8 +497,8 @@ function companionSVG(companion, state, custom) {
     eyes = `
       <ellipse class="ol" cx="118" cy="88" rx="${rx}" ry="${ry}" fill="#fff"/>
       <ellipse class="ol" cx="162" cy="88" rx="${rx}" ry="${ry}" fill="#fff"/>
-      <circle cx="122" cy="84" r="5.5" fill="#18110b"/>
-      <circle cx="158" cy="84" r="5.5" fill="#18110b"/>
+      <circle cx="122" cy="84" r="5.5" fill="${pupilColor}"/>
+      <circle cx="158" cy="84" r="5.5" fill="${pupilColor}"/>
       <circle cx="118" cy="79" r="2" fill="#fff"/>
       <circle cx="154" cy="79" r="2" fill="#fff"/>
     `;
@@ -372,7 +541,7 @@ function companionSVG(companion, state, custom) {
   return `
   <svg viewBox="0 0 240 230" class="companion-svg companion-${state} temperament-${cust.temperamentId}" xmlns="http://www.w3.org/2000/svg">
     <ellipse class="floor-shadow" cx="140" cy="222" rx="92" ry="9"/>
-    ${chairSVG()}
+    ${chairSVG(cust.chairColorId)}
     <g transform="translate(140 222) scale(${sizeScale}) translate(-140 -222)">
       <g class="companion-body">
         <g transform="translate(140 150) scale(${torsoScale}) translate(-140 -150)">
@@ -381,6 +550,7 @@ function companionSVG(companion, state, custom) {
           <ellipse class="ol" cx="140" cy="150" rx="33" ry="27" fill="${c.belly}"/>
           <ellipse class="ol" cx="110" cy="180" rx="15" ry="11" fill="${c.body}"/>
           <ellipse class="ol" cx="170" cy="180" rx="15" ry="11" fill="${c.body}"/>
+          ${torsoAccessories}
         </g>
         <g transform="translate(140 90) scale(${headScale}) translate(-140 -90)">
           ${f.ears}
@@ -395,6 +565,7 @@ function companionSVG(companion, state, custom) {
           ${mouth}
           ${f.muzzle || ""}
           ${sleepyZ}
+          ${headAccessories}
         </g>
       </g>
     </g>
@@ -519,6 +690,26 @@ function avatarSVG(companion, state, custom) {
   const playful = cust.temperamentId === "playful";
   const sleepyEyes = blink || sleepy;
 
+  const equipped = equippedAccessoryItems(cust.accessories);
+  const haircut = equipped.find((a) => a.slot === "haircut");
+  const eyecolorItem = equipped.find((a) => a.slot === "eyecolor");
+  const pupilColor = eyecolorItem ? eyecolorItem.eyeColor : "#18110b";
+  const headAccessories = equipped
+    .filter((a) => a.zone === "head" && a.slot !== "haircut")
+    .map((a) => a.render())
+    .join("");
+  const torsoAccessories = equipped
+    .filter((a) => a.zone === "torso")
+    .map((a) => a.render())
+    .join("");
+
+  const showHair = !f.helmet && !f.robotFace;
+  const hair = showHair
+    ? haircut
+      ? haircut.render(DEFAULT_HAIR_COLOR)
+      : `<path class="ol" d="M110 64 Q110 36 140 34 Q170 36 170 64 L162 64 Q162 46 140 46 Q118 46 118 64 Z" fill="${DEFAULT_HAIR_COLOR}"/>`
+    : "";
+
   let face;
   if (f.helmet) {
     face = `<rect class="ol" x="118" y="82" width="44" height="12" rx="4" fill="#18110b"/>`;
@@ -531,7 +722,7 @@ function avatarSVG(companion, state, custom) {
     face = sleepyEyes
       ? `<path class="ol" d="M120 86 q8 6 16 0" stroke="#18110b" stroke-width="3" fill="none" stroke-linecap="round"/>
          <path class="ol" d="M144 86 q8 6 16 0" stroke="#18110b" stroke-width="3" fill="none" stroke-linecap="round"/>`
-      : `<circle cx="128" cy="86" r="4.5" fill="#18110b"/><circle cx="152" cy="86" r="4.5" fill="#18110b"/>`;
+      : `<circle cx="128" cy="86" r="4.5" fill="${pupilColor}"/><circle cx="152" cy="86" r="4.5" fill="${pupilColor}"/>`;
     let mouth;
     if (grumpy) mouth = `<path class="mouth" d="M126 106 Q140 98 154 106"/>`;
     else if (playful) mouth = `<path class="mouth" d="M122 98 Q140 114 158 98"/>`;
@@ -561,7 +752,7 @@ function avatarSVG(companion, state, custom) {
   return `
   <svg viewBox="0 0 240 230" class="companion-svg companion-${state} temperament-${cust.temperamentId}" xmlns="http://www.w3.org/2000/svg">
     <ellipse class="floor-shadow" cx="140" cy="222" rx="92" ry="9"/>
-    ${chairSVG()}
+    ${chairSVG(cust.chairColorId)}
     <g transform="translate(140 222) scale(${sizeScale}) translate(-140 -222)">
       <g class="companion-body">
         <g transform="translate(140 156) scale(${torsoScale}) translate(-140 -156)">
@@ -576,15 +767,18 @@ function avatarSVG(companion, state, custom) {
           ${f.torsoExtra || ""}
           <circle class="ol" cx="91" cy="182" r="11" fill="${c.head}"/>
           <circle class="ol" cx="189" cy="182" r="11" fill="${c.head}"/>
+          ${torsoAccessories}
         </g>
         <g transform="translate(140 88) scale(${headScale}) translate(-140 -88)">
           <rect class="ol" x="112" y="58" width="56" height="60" rx="16" fill="${f.headFill}"/>
+          ${hair}
           ${f.headExtra || ""}
           ${blush}
           ${face}
           ${eyebrows}
           ${glasses}
           ${sleepyZ}
+          ${headAccessories}
         </g>
       </g>
     </g>

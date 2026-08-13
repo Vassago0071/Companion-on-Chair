@@ -56,6 +56,10 @@
           <span class="control-label">Temperament</span>
           <div class="swatch-row" id="opt-temperament"></div>
         </div>
+        <div class="control-group">
+          <span class="control-label">Chair Color</span>
+          <div class="swatch-row" id="opt-chair"></div>
+        </div>
         <div class="customize-actions">
           <button class="ctrl-btn" id="customize-back">Back</button>
           <button class="ctrl-btn primary" id="customize-confirm">Start Focusing</button>
@@ -286,7 +290,12 @@
       <button class="modal-close" id="class-shop-close">✕</button>
     </div>
     <p class="subtitle">Spend points your teacher awarded — only usable in this class.</p>
+    <div class="shop-tabs">
+      <button class="shop-tab-btn active" id="class-shop-tab-decor">Room Decor</button>
+      <button class="shop-tab-btn" id="class-shop-tab-accessories">Accessories</button>
+    </div>
     <div id="class-shop-grid" class="shop-grid"></div>
+    <div id="class-shop-accessories-grid" class="shop-grid hidden"></div>
   </div>
 </div>
 

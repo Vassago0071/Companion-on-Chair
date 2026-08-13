@@ -232,12 +232,7 @@ body {
   stroke-linecap: round;
 }
 
-.companion-svg .chair .tuft-button circle {
-  fill: #24406b;
-}
-
 .companion-svg .chair .blanket-check rect {
-  fill: #b9c9dc;
   opacity: 0.85;
 }
 
@@ -558,6 +553,27 @@ body {
 }
 
 /* ---------------------------------- shop --------------------------------- */
+.shop-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.shop-tab-btn {
+  border: 2px solid var(--cream-2);
+  background: transparent;
+  color: var(--brown);
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 6px 16px;
+  cursor: pointer;
+}
+
+.shop-tab-btn.active {
+  border-color: var(--accent);
+  background: var(--cream-2);
+}
+
 .shop-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -574,6 +590,11 @@ body {
 
 .shop-card.owned {
   opacity: 0.75;
+}
+
+.shop-card.equipped {
+  opacity: 1;
+  outline: 2px solid var(--accent);
 }
 
 .shop-icon {

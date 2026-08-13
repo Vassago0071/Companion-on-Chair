@@ -182,6 +182,12 @@ function renderOptionRow(containerId, options, key, formatLabel) {
     if (opt.colors) {
       btn.classList.add("swatch-color");
       btn.style.setProperty("--swatch-color", opt.colors.body);
+    } else if (opt.color) {
+      btn.classList.add("swatch-color");
+      btn.style.setProperty("--swatch-color", opt.color);
+    } else if (opt.body) {
+      btn.classList.add("swatch-color");
+      btn.style.setProperty("--swatch-color", opt.body);
     }
     btn.textContent = formatLabel(opt);
     btn.addEventListener("click", () => {
@@ -198,6 +204,7 @@ function renderCustomizeOptions() {
   renderOptionRow("opt-size", SIZES, "sizeId", (s) => s.label);
   renderOptionRow("opt-age", AGES, "ageId", (a) => a.label);
   renderOptionRow("opt-temperament", TEMPERAMENTS, "temperamentId", (t) => `${t.icon} ${t.label}`);
+  renderOptionRow("opt-chair", CHAIR_COLORS, "chairColorId", (c) => c.label);
 }
 
 function renderDecor() {
