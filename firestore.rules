@@ -1,0 +1,53 @@
+rules_version = '2';
+
+// Reference security rules for Companion on Chair's Classroom Mode.
+// Paste this into your Firebase project's Firestore Database → Rules tab
+// and Publish. See the README's "Classroom Mode" section for full setup.
+//
+// What these rules enforce:
+//   - Anyone can read class/roster data (needed for the join-by-code lookup
+//     and the live leaderboard) — nothing sensitive is stored here.
+//   - Only the authenticated user who created a class (its teacherUid) can
+//     create it, update it (e.g. end the session), or edit any student's
+//     points within it.
+//   - A student can only ever create/update their OWN roster entry, and a
+//     student-authored update can never increase their own points (points
+//     only move up via the teacher, or down via a class-shop purchase).
+//
+// Known limitation: Firestore rules can't fully validate that a student's
+// purchase matches a real shop item's price — a determined user could craft
+// a request that spends fewer points than an item costs. Closing that gap
+// fully would need a Cloud Function (Blaze plan) to run purchases
+// server-side. Fine for a classroom-trust setting; worth hardening if this
+// ever needs to resist deliberate cheating.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /classes/{classId} {
+      allow read: if true;
+      allow create: if request.auth != null
+                    && request.resource.data.teacherUid == request.auth.uid;
+      allow update: if request.auth != null
+                    && resource.data.teacherUid == request.auth.uid;
+      allow delete: if false;
+
+      match /students/{studentUid} {
+        allow read: if true;
+        allow create: if request.auth != null && request.auth.uid == studentUid;
+        allow update: if request.auth != null && (
+          // The teacher can freely update any student (awarding/removing points).
+          get(/databases/$(database)/documents/classes/$(classId)).data.teacherUid == request.auth.uid
+          ||
+          // A student may only update their OWN doc, and only in ways that
+          // never raise their own points or shrink their purchase history.
+          (
+            request.auth.uid == studentUid &&
+            request.resource.data.points <= resource.data.points &&
+            request.resource.data.ownedDecor.size() >= resource.data.ownedDecor.size()
+          )
+        );
+        allow delete: if false;
+      }
+    }
+  }
+}

@@ -20,6 +20,7 @@
     <button class="pill" id="btn-stats" title="Stats">📈 Stats</button>
     <button class="pill" id="btn-customize" title="Customize companion">🎨 Customize</button>
     <button class="pill" id="btn-kids-mode" title="Toggle Kids Mode">🧸 Kids Mode: Off</button>
+    <button class="pill" id="btn-classroom" title="Classroom Mode">🏫 Classroom</button>
     <button class="pill" id="btn-switch" title="Switch companion">🔁 Switch</button>
   </div>
 </header>
@@ -98,6 +99,71 @@
     </div>
   </section>
 
+  <!-- ===================== CLASSROOM: HOME ===================== -->
+  <section id="screen-classroom-home" class="screen hidden">
+    <h1>Classroom Mode</h1>
+    <p class="subtitle">Focus together. A teacher hosts a class; students join with a code and bring their companion.</p>
+    <div id="firebase-setup-notice" class="setup-notice hidden"></div>
+    <div class="classroom-role-cards">
+      <button class="role-card" id="btn-host-class">
+        <span class="role-icon">🧑‍🏫</span>
+        <span class="role-title">Host a Class</span>
+        <span class="role-desc">Create a session, share the code, and award points.</span>
+      </button>
+      <button class="role-card" id="btn-join-class">
+        <span class="role-icon">🧑‍🎓</span>
+        <span class="role-title">Join a Class</span>
+        <span class="role-desc">Enter a code from your teacher and bring your companion.</span>
+      </button>
+    </div>
+    <button class="ctrl-btn" id="classroom-home-back">Back</button>
+  </section>
+
+  <!-- ===================== CLASSROOM: HOST SETUP ===================== -->
+  <section id="screen-classroom-host" class="screen hidden">
+    <h1>Host a Class</h1>
+    <p class="subtitle">Give your class a name — you'll get a short code to share with students.</p>
+    <form id="host-form" class="inline-form">
+      <input type="text" id="host-class-name" placeholder="e.g. Period 3 Focus Club" autocomplete="off" required />
+      <button type="submit" class="ctrl-btn primary">Create Class</button>
+    </form>
+    <button class="ctrl-btn" id="host-back">Back</button>
+  </section>
+
+  <!-- ===================== CLASSROOM: JOIN SETUP ===================== -->
+  <section id="screen-classroom-join" class="screen hidden">
+    <h1>Join a Class</h1>
+    <p class="subtitle">Enter the code your teacher gave you, plus the name you want the class to see.</p>
+    <form id="join-form" class="inline-form">
+      <input type="text" id="join-class-code" placeholder="Class code (e.g. 7F3K9Q)" maxlength="6" autocomplete="off" required />
+      <input type="text" id="join-display-name" placeholder="Your display name" autocomplete="off" required />
+      <button type="submit" class="ctrl-btn primary">Join Class</button>
+    </form>
+    <p class="subtitle small">Joining with your current companion: <strong id="join-companion-name"></strong></p>
+    <button class="ctrl-btn" id="join-back">Back</button>
+  </section>
+
+  <!-- ===================== CLASSROOM: TEACHER DASHBOARD ===================== -->
+  <section id="screen-classroom-teacher" class="screen hidden">
+    <h1 id="teacher-class-name">Class</h1>
+    <p class="subtitle">Share this code with your students:</p>
+    <div class="class-code-display" id="teacher-class-code">------</div>
+    <div id="teacher-roster" class="roster-grid"></div>
+    <button class="ctrl-btn danger" id="teacher-end-class">End Class</button>
+  </section>
+
+  <!-- ===================== CLASSROOM: STUDENT DASHBOARD ===================== -->
+  <section id="screen-classroom-student" class="screen hidden">
+    <h1 id="student-class-name">Class</h1>
+    <div class="student-points-banner">
+      <span>Your points: <strong id="student-points">0</strong> 🏅</span>
+      <button class="ctrl-btn primary" id="student-open-shop">Class Shop</button>
+    </div>
+    <p class="subtitle">Whole class leaderboard — updates live.</p>
+    <div id="student-roster" class="roster-grid"></div>
+    <button class="ctrl-btn" id="student-leave-class">Leave Class</button>
+  </section>
+
 </main>
 
 <!-- ===================== REWARD MODAL ===================== -->
@@ -154,7 +220,25 @@
   </div>
 </div>
 
+<!-- ===================== CLASS SHOP MODAL ===================== -->
+<div class="modal-backdrop hidden" id="modal-class-shop">
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <h2>Class Shop</h2>
+      <span class="fish-tag">🏅 <span id="class-shop-points">0</span></span>
+      <button class="modal-close" id="class-shop-close">✕</button>
+    </div>
+    <p class="subtitle">Spend points your teacher awarded — only usable in this class.</p>
+    <div id="class-shop-grid" class="shop-grid"></div>
+  </div>
+</div>
+
 <script src="js/companions.js"></script>
 <script src="js/app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/classroom.js"></script>
 </body>
 </html>

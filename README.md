@@ -36,18 +36,54 @@ python3 -m http.server 8000
   shown as a banner in the room.
 - **Stats**: sessions completed, total focus minutes, day streak, gifts
   received.
-- Everything persists in `localStorage` — no backend required.
+- **Classroom Mode**: a teacher hosts a live class session and shares a short
+  code; students join with that code and their companion. The whole class is
+  visible to everyone in a live-updating leaderboard (points sorted
+  descending) for friendly competitive bragging. The teacher can award (or
+  remove) points to any student in real time; students spend those points in
+  a **class-scoped shop** — separate from their personal fish/decor — so
+  purchases only ever apply within that teacher's session. Requires a
+  Firebase project to sync across devices; see "Classroom Mode setup" below.
+- Everything else persists in `localStorage` — no backend required.
 
 ## Files
 
 - `index.html` — screens and modals (companion picker, customize screen,
-  focus room, shop, tasks, stats, reward popup).
+  focus room, shop, tasks, stats, reward popup, Classroom Mode screens).
 - `css/style.css` — warm, flat-cutout visual theme.
 - `js/companions.js` — animal and Kids Mode rosters, customization options
   (palettes, sizes, ages, temperaments), and the SVG armchair/character
   renderers.
 - `js/app.js` — timer logic, rewards, shop, tasks, customization, and
   persistence.
+- `js/firebase-config.js` — where you paste your own Firebase project's
+  config to enable Classroom Mode (placeholder by default).
+- `js/classroom.js` — Classroom Mode: Firebase glue (auth, Firestore
+  reads/writes/listeners) plus the teacher/student dashboard UI.
+- `firestore.rules` — reference Firestore security rules for Classroom Mode;
+  paste into your Firebase project's Firestore → Rules tab.
+
+## Classroom Mode setup
+
+Classroom Mode needs a real backend to sync points and rosters across
+different students' devices, so it uses Firebase (Firestore + Anonymous
+Auth). Without it configured, the Classroom screen shows a setup notice and
+the rest of the app works exactly as before.
+
+1. Create a free project at [console.firebase.google.com](https://console.firebase.google.com).
+2. **Build → Firestore Database → Create database** (production mode is fine
+   — the rules below lock it down).
+3. **Build → Authentication → Sign-in method** → enable **Anonymous**.
+4. **Project settings → General → Your apps → Add app → Web** → register it,
+   then copy the `firebaseConfig` object it gives you into
+   `js/firebase-config.js` (`FIREBASE_CONFIG`).
+5. **Firestore Database → Rules** → paste in the contents of
+   `firestore.rules` at the repo root → Publish.
+
+That's it — reload the app and "Host a Class" / "Join a Class" will be
+enabled. See the comments in `firestore.rules` for what the rules do and
+their one known limitation (purchase amounts aren't validated
+server-side without a Cloud Function — fine for a classroom-trust setting).
 
 ## Notes
 

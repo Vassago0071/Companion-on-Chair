@@ -114,19 +114,36 @@ function renderCompanionGrid() {
   });
 }
 
+/* All top-level screens in the app, including Classroom Mode's — kept in one
+   place so any entry point can switch screens without leaving a stale one
+   visible underneath. */
+const ALL_SCREEN_IDS = [
+  "screen-select",
+  "screen-customize",
+  "screen-focus",
+  "screen-classroom-home",
+  "screen-classroom-host",
+  "screen-classroom-join",
+  "screen-classroom-teacher",
+  "screen-classroom-student",
+];
+
+function showOnlyScreen(id) {
+  ALL_SCREEN_IDS.forEach((sid) => {
+    const node = el(sid);
+    if (node) node.classList.toggle("hidden", sid !== id);
+  });
+}
+
 function showFocusScreen() {
-  screenSelect.classList.add("hidden");
-  screenCustomize.classList.add("hidden");
-  screenFocus.classList.remove("hidden");
+  showOnlyScreen("screen-focus");
   renderChair();
   renderDecor();
   renderActiveTaskBanner();
 }
 
 function showSelectScreen() {
-  screenFocus.classList.add("hidden");
-  screenCustomize.classList.add("hidden");
-  screenSelect.classList.remove("hidden");
+  showOnlyScreen("screen-select");
   renderCompanionGrid();
 }
 
@@ -144,9 +161,7 @@ function openCustomize(companionId, { fromSelect }) {
   renderCustomizeOptions();
   renderCustomizePreview();
 
-  screenSelect.classList.add("hidden");
-  screenFocus.classList.add("hidden");
-  screenCustomize.classList.remove("hidden");
+  showOnlyScreen("screen-customize");
 
   el("customize-back").onclick = () => {
     if (fromSelect) {
