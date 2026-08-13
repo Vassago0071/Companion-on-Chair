@@ -1,12 +1,12 @@
 rules_version = '2';
 
 // Reference security rules for Companion on Chair's Classroom Mode.
-// Paste this into your Firebase project's Firestore Database → Rules tab
+// Paste this into your Firebase project's Firestore Database -> Rules tab
 // and Publish. See the README's "Classroom Mode" section for full setup.
 //
 // What these rules enforce:
 //   - Anyone can read class/roster data (needed for the join-by-code lookup
-//     and the live leaderboard) — nothing sensitive is stored here.
+//     and the live leaderboard) -- nothing sensitive is stored here.
 //   - Only the authenticated user who created a class (its teacherUid) can
 //     create it, update it (e.g. end the session), or edit any student's
 //     points within it.
@@ -15,7 +15,7 @@ rules_version = '2';
 //     only move up via the teacher, or down via a class-shop purchase).
 //
 // Known limitation: Firestore rules can't fully validate that a student's
-// purchase matches a real shop item's price — a determined user could craft
+// purchase matches a real shop item's price -- a determined user could craft
 // a request that spends fewer points than an item costs. Closing that gap
 // fully would need a Cloud Function (Blaze plan) to run purchases
 // server-side. Fine for a classroom-trust setting; worth hardening if this
