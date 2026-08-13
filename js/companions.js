@@ -76,8 +76,8 @@ const KID_AVATARS = [
     colors: { primary: "#a8332c", secondary: "#3a2c22", head: "#f2c9a0", trim: "#7a231d" },
   },
   {
-    id: "blaze",
-    name: "Blaze",
+    id: "rally",
+    name: "Rally",
     species: "Athlete",
     kind: "avatar",
     tagline: "Treats every Pomodoro like a game to win.",
@@ -93,8 +93,58 @@ const KID_AVATARS = [
   },
 ];
 
+/* Superhero-archetype roster: original caped characters (elemental/cosmic
+   powers — a generic trope shared across countless properties) with their
+   own original names, costumes, and color schemes. Not a recreation of any
+   specific existing superhero's likeness, name, or branding. */
+const HERO_AVATARS = [
+  {
+    id: "blaze",
+    name: "Blaze",
+    species: "Ember",
+    kind: "avatar",
+    tagline: "Flies in on a trail of fire when focus time starts.",
+    colors: { primary: "#e8452f", secondary: "#3a1f1a", head: "#f2c9a0", trim: "#ffb347" },
+  },
+  {
+    id: "voltway",
+    name: "Voltway",
+    species: "Storm",
+    kind: "avatar",
+    tagline: "Moves at lightning speed between tasks.",
+    colors: { primary: "#f0c419", secondary: "#2b2b52", head: "#f2c9a0", trim: "#4fc3f7" },
+  },
+  {
+    id: "frostbyte",
+    name: "Frostbyte",
+    species: "Frost",
+    kind: "avatar",
+    tagline: "Keeps a cool head through the longest sessions.",
+    colors: { primary: "#aee3f5", secondary: "#2c4a5e", head: "#f2c9a0", trim: "#ffffff" },
+  },
+  {
+    id: "terra",
+    name: "Terra",
+    species: "Earth",
+    kind: "avatar",
+    tagline: "Unshakeable focus, rock solid.",
+    colors: { primary: "#6a9c5c", secondary: "#5b3a22", head: "#f2c9a0", trim: "#b5651d" },
+  },
+  {
+    id: "nova",
+    name: "Nova Belle",
+    species: "Cosmic",
+    kind: "avatar",
+    tagline: "Focus that's out of this world.",
+    colors: { primary: "#8d5fd3", secondary: "#2c1f4a", head: "#f2c9a0", trim: "#ff6fae" },
+  },
+];
+
+/* Every companion, animal or avatar, available together in one roster. */
+const ALL_COMPANIONS = [...COMPANIONS, ...KID_AVATARS, ...HERO_AVATARS];
+
 function getCompanion(id) {
-  return [...COMPANIONS, ...KID_AVATARS].find((c) => c.id === id) || COMPANIONS[0];
+  return ALL_COMPANIONS.find((c) => c.id === id) || ALL_COMPANIONS[0];
 }
 
 /** Dispatches to the right renderer based on the companion's kind. */
@@ -398,9 +448,56 @@ function avatarFeatures(species, colors) {
           <circle cx="140" cy="150" r="5" fill="${colors.trim}"/>
         `,
       };
+    /* ---- superhero-archetype cases: shared cape + domino mask, unique chest emblem ---- */
+    case "Ember":
+      return {
+        headFill: colors.head,
+        headExtra: heroMask(colors.trim),
+        backExtra: heroCape(colors.trim),
+        torsoExtra: `<path class="ol" d="M140 142 Q131 156 138 167 Q140 173 146 167 Q153 156 140 142 Z" fill="${colors.trim}"/>`,
+      };
+    case "Storm":
+      return {
+        headFill: colors.head,
+        headExtra: heroMask(colors.trim),
+        backExtra: heroCape(colors.trim),
+        torsoExtra: `<path class="ol" d="M146 138 L131 158 L139 158 L133 172 L153 151 L142 151 Z" fill="${colors.trim}"/>`,
+      };
+    case "Frost":
+      return {
+        headFill: colors.head,
+        headExtra: heroMask(colors.trim),
+        backExtra: heroCape(colors.trim),
+        torsoExtra: `
+          <path d="M140 138 L140 172 M126 155 L154 155 M130 145 L150 165 M150 145 L130 165"
+                stroke="${colors.trim}" stroke-width="4" fill="none" stroke-linecap="round"/>
+        `,
+      };
+    case "Earth":
+      return {
+        headFill: colors.head,
+        headExtra: heroMask(colors.trim),
+        backExtra: heroCape(colors.trim),
+        torsoExtra: `<path class="ol" d="M124 168 L140 142 L156 168 Z" fill="${colors.trim}"/>`,
+      };
+    case "Cosmic":
+      return {
+        headFill: colors.head,
+        headExtra: heroMask(colors.trim),
+        backExtra: heroCape(colors.trim),
+        torsoExtra: `<path class="ol" d="M140 138 L145 154 L161 156 L145 158 L140 174 L135 158 L119 156 L135 154 Z" fill="${colors.trim}"/>`,
+      };
     default:
       return { headFill: colors.head };
   }
+}
+
+function heroCape(color) {
+  return `<path class="ol" d="M108 130 L98 192 L140 180 L182 192 L172 130 Z" fill="${color}"/>`;
+}
+
+function heroMask(color) {
+  return `<path class="ol" d="M108 76 Q140 64 172 76 L172 94 Q140 82 108 94 Z" fill="${color}"/>`;
 }
 
 /**
@@ -468,6 +565,7 @@ function avatarSVG(companion, state, custom) {
     <g transform="translate(140 222) scale(${sizeScale}) translate(-140 -222)">
       <g class="companion-body">
         <g transform="translate(140 156) scale(${torsoScale}) translate(-140 -156)">
+          ${f.backExtra || ""}
           <rect class="ol" x="82" y="180" width="26" height="34" rx="8" fill="${c.secondary}"/>
           <rect class="ol" x="172" y="180" width="26" height="34" rx="8" fill="${c.secondary}"/>
           <rect class="ol" x="80" y="206" width="30" height="12" rx="4" fill="#2e2b28"/>

@@ -14,14 +14,20 @@ python3 -m http.server 8000
 
 ## What's included
 
-- **5 companions** to choose from, each an inline SVG sitting on a shared
-  cozy armchair, drawn in a bold-outline, flat-cutout style: Momo (cat),
-  Biscuit (corgi), Ember (fox), Sage (owl), Clover (bunny). Switch
-  companions anytime.
-- **Kids Mode**: swap the animal roster for 5 original blocky mini-figure
-  characters (Robo, Scout, Captain Pip, Blaze, Shieldy) — an original take
-  on the "blocky voxel avatar" genre, not a recreation of any specific
-  game's characters or branding. Toggle from the top bar.
+- **15 companions** to choose from, all in one roster, each an inline SVG
+  sitting on a shared cozy armchair, drawn in a bold-outline, flat-cutout
+  style:
+  - **5 animals** — Momo (cat), Biscuit (corgi), Ember (fox), Sage (owl),
+    Clover (bunny).
+  - **5 blocky mini-figures** — Robo, Scout, Captain Pip, Rally, Shieldy —
+    an original take on the "blocky voxel avatar" genre, not a recreation
+    of any specific game's characters or branding.
+  - **5 superhero archetypes** — Blaze, Voltway, Frostbyte, Terra, Nova
+    Belle — original caped characters with elemental/cosmic powers (a
+    generic trope shared across countless properties), each with their own
+    name, costume, and color scheme. Not a recreation of any specific
+    existing superhero.
+  Switch companions anytime.
 - **Customization** at pick-time (and anytime after via the "Customize"
   button): color palette, size, age (young/adult/elder, with matching
   visual cues like blush cheeks or glasses), and temperament
@@ -62,9 +68,9 @@ python3 -m http.server 8000
 - `index.html` — screens and modals (companion picker, customize screen,
   focus room, shop, tasks, stats, reward popup, Classroom Mode screens).
 - `css/style.css` — warm, flat-cutout visual theme.
-- `js/companions.js` — animal and Kids Mode rosters, customization options
-  (palettes, sizes, ages, temperaments), and the SVG armchair/character
-  renderers.
+- `js/companions.js` — the animal, blocky-avatar, and superhero rosters,
+  customization options (palettes, sizes, ages, temperaments), and the SVG
+  armchair/character renderers.
 - `js/app.js` — timer logic, rewards, shop, tasks, customization, and
   persistence.
 - `js/firebase-config.js` — where you paste your own Firebase project's
@@ -109,7 +115,8 @@ The companion illustrations and "Companion on Chair" branding here are
 original to this project. The bold-outline, flat-cutout look is a general
 animation *style* choice (thick outlines, oversized eyes, simple flat
 shapes) — the specific characters, names, and artwork are original, not
-reused from any third-party show or app. Likewise, Kids Mode's blocky
-mini-figures are an original design in the general "blocky voxel avatar"
-genre shared by many games — not a recreation of any specific game's
-characters, name, or branding.
+reused from any third-party show or app. Likewise, the blocky mini-figures
+are an original design in the general "blocky voxel avatar" genre shared by
+many games, and the superhero characters are an original take on the
+elemental/caped-hero archetype — neither set recreates any specific
+existing game's or franchise's characters, names, or branding.

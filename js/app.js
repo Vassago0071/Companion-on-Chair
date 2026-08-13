@@ -38,7 +38,6 @@ const defaultState = () => ({
   activeTaskId: null,
   ownedDecor: [],
   customizations: {},
-  kidsMode: false,
 });
 
 let state = loadState();
@@ -95,12 +94,7 @@ const taskCountEl = el("task-count");
 
 function renderCompanionGrid() {
   companionGrid.innerHTML = "";
-  const roster = state.kidsMode ? KID_AVATARS : COMPANIONS;
-  el("select-title").textContent = state.kidsMode ? "Choose your kids-mode buddy" : "Choose your focus companion";
-  el("select-subtitle").textContent = state.kidsMode
-    ? "Pick a blocky buddy to join you on the chair. Switch back to animal companions anytime."
-    : "Pick who joins you on the chair while you work. You can switch anytime.";
-  roster.forEach((c) => {
+  ALL_COMPANIONS.forEach((c) => {
     const card = document.createElement("button");
     card.className = "companion-card";
     card.innerHTML = `
@@ -504,13 +498,6 @@ function wireEvents() {
   btnPause.addEventListener("click", pauseTimer);
   btnStop.addEventListener("click", stopTimer);
 
-  el("btn-kids-mode").addEventListener("click", () => {
-    state.kidsMode = !state.kidsMode;
-    saveState();
-    el("btn-kids-mode").textContent = state.kidsMode ? "🧸 Kids Mode: On" : "🧸 Kids Mode: Off";
-    showSelectScreen();
-  });
-
   el("btn-switch").addEventListener("click", () => {
     if (timer.running) {
       const ok = confirm("A session is running. Switching companions will give up this session. Continue?");
@@ -590,7 +577,6 @@ function wireEvents() {
 function init() {
   wireEvents();
   renderTopbar();
-  el("btn-kids-mode").textContent = state.kidsMode ? "🧸 Kids Mode: On" : "🧸 Kids Mode: Off";
   setMode("pomodoro");
   setDuration(25);
   if (state.companionId) {
