@@ -81,6 +81,7 @@ async function createClassInFirestore(className) {
 }
 
 async function findClassByCode(code) {
+  initFirebase(); // this is a public read and doesn't need ensureAuth(), but db must exist
   const snap = await db
     .collection("classes")
     .where("code", "==", code.toUpperCase())
