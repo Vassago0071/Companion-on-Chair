@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// Reference Storage security rules for Companion on Chair's Lesson
+// Materials feature (teacher-uploaded files in Classroom Mode). Paste this
+// into your Firebase project's Storage -> Rules tab and Publish. See the
+// README's "Classroom Mode setup" section for full setup.
+//
+// What these rules enforce:
+//   - Anyone can read/download a class's shared files (needed so students,
+//     who aren't given any special role, can open what the teacher shared).
+//   - Only the authenticated teacher who owns the matching class in
+//     Firestore (checked via firestore.get(), same teacherUid as
+//     firestore.rules) can upload or delete files under that class's path.
+//   - Uploads are capped at 25 MB per file.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /classes/{classId}/lesson/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.size < 25 * 1024 * 1024
+                   && firestore.get(/databases/(default)/documents/classes/$(classId)).data.teacherUid == request.auth.uid;
+      allow delete: if request.auth != null
+                    && firestore.get(/databases/(default)/documents/classes/$(classId)).data.teacherUid == request.auth.uid;
+    }
+  }
+}

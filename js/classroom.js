@@ -17,6 +17,7 @@ const CLASSROOM_THEMES = [
 let firebaseApp = null;
 let db = null;
 let auth = null;
+let storage = null;
 let googleProvider = null;
 let currentUid = null;
 let rosterUnsubscribe = null;
@@ -45,6 +46,7 @@ function initFirebase() {
   firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
   db = firebase.firestore();
   auth = firebase.auth();
+  storage = firebase.storage();
   return firebaseApp;
 }
 
@@ -227,6 +229,59 @@ async function stopClassTimer(classId, currentTimer) {
   await db.collection("classes").doc(classId).update({ classTimer: merged });
 }
 
+/* Lesson materials: notes/homework text plus uploaded files (Firebase
+ * Storage), both stored under the class doc's `lesson` field so they ride
+ * along on the same live class-doc listener as the theme and timer. */
+async function saveLessonNotes(classId, notes) {
+  const merged = { files: [], ...currentLessonData, notes };
+  await db.collection("classes").doc(classId).update({ lesson: merged });
+}
+
+async function uploadLessonFile(classId, file, onProgress) {
+  const path = `classes/${classId}/lesson/${Date.now()}-${file.name}`;
+  const task = storage.ref(path).put(file);
+  return new Promise((resolve, reject) => {
+    task.on(
+      "state_changed",
+      (snapshot) => {
+        if (onProgress) onProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100));
+      },
+      reject,
+      async () => {
+        try {
+          const url = await task.snapshot.ref.getDownloadURL();
+          resolve({ name: file.name, url, path, size: file.size, uploadedAt: Date.now() });
+        } catch (err) {
+          reject(err);
+        }
+      }
+    );
+  });
+}
+
+async function addLessonFile(classId, fileMeta) {
+  const merged = {
+    notes: "",
+    ...currentLessonData,
+    files: [...((currentLessonData && currentLessonData.files) || []), fileMeta],
+  };
+  await db.collection("classes").doc(classId).update({ lesson: merged });
+}
+
+async function removeLessonFile(classId, fileMeta) {
+  const merged = {
+    notes: "",
+    ...currentLessonData,
+    files: ((currentLessonData && currentLessonData.files) || []).filter((f) => f.path !== fileMeta.path),
+  };
+  await db.collection("classes").doc(classId).update({ lesson: merged });
+  try {
+    await storage.ref(fileMeta.path).delete();
+  } catch (err) {
+    /* file already gone or storage unreachable — the Firestore removal above still succeeded */
+  }
+}
+
 async function listMyClasses() {
   const uid = auth.currentUser.uid;
   const snap = await db.collection("classes").where("teacherUid", "==", uid).get();
@@ -375,7 +430,54 @@ function stopClassTimerTicking() {
     classTimerTickHandle = null;
   }
   currentClassTimerData = null;
+  currentLessonData = null;
   renderClassTimerDisplays();
+}
+
+/* Lesson materials rendering. */
+let currentLessonData = null;
+
+function renderLessonFileList(container, files, { isTeacher, classId }) {
+  if (!container) return;
+  if (!files || files.length === 0) {
+    container.innerHTML = isTeacher ? "" : `<p class="task-empty">No files shared yet.</p>`;
+    return;
+  }
+  container.innerHTML = "";
+  files.forEach((f) => {
+    const row = document.createElement("div");
+    row.className = "lesson-file-row";
+    row.innerHTML = `
+      <a href="${f.url}" target="_blank" rel="noopener">📄 ${escapeHTML(f.name)}</a>
+      ${isTeacher ? `<button type="button" class="file-remove-btn" title="Remove">✕</button>` : ""}
+    `;
+    if (isTeacher) {
+      row.querySelector(".file-remove-btn").addEventListener("click", () => {
+        removeLessonFile(classId, f).catch((err) => alert("Could not remove file: " + err.message));
+      });
+    }
+    container.appendChild(row);
+  });
+}
+
+function renderTeacherLessonPanel(classId) {
+  const notes = (currentLessonData && currentLessonData.notes) || "";
+  const notesInput = classroomEl("lesson-notes-input");
+  if (notesInput && document.activeElement !== notesInput) notesInput.value = notes;
+  renderLessonFileList(classroomEl("teacher-lesson-files"), currentLessonData && currentLessonData.files, {
+    isTeacher: true,
+    classId,
+  });
+}
+
+function renderStudentLessonPanel(classId) {
+  const notes = (currentLessonData && currentLessonData.notes) || "";
+  const notesDisplay = classroomEl("student-lesson-notes");
+  if (notesDisplay) notesDisplay.textContent = notes || "No notes shared yet.";
+  renderLessonFileList(classroomEl("student-lesson-files"), currentLessonData && currentLessonData.files, {
+    isTeacher: false,
+    classId,
+  });
 }
 
 function openTeacherDashboard(classId, className, code) {
@@ -393,6 +495,8 @@ function openTeacherDashboard(classId, className, code) {
     renderThemePicker(classId, classData.background);
     currentClassTimerData = classData.classTimer || null;
     renderClassTimerDisplays();
+    currentLessonData = classData.lesson || { notes: "", files: [] };
+    renderTeacherLessonPanel(classId);
   });
   startClassTimerTicking();
 }
@@ -413,6 +517,8 @@ function openStudentDashboard(classId, className, myUid) {
     applyClassroomBackground("screen-classroom-student", classData.background);
     currentClassTimerData = classData.classTimer || null;
     renderClassTimerDisplays();
+    currentLessonData = classData.lesson || { notes: "", files: [] };
+    renderStudentLessonPanel(classId);
   });
   startClassTimerTicking();
 }
@@ -635,6 +741,32 @@ function wireClassroomEvents() {
     openModal("modal-class-shop");
   });
   classroomEl("class-shop-close").addEventListener("click", () => closeModal("modal-class-shop"));
+
+  classroomEl("btn-save-lesson-notes").addEventListener("click", () => {
+    if (!classroomSession) return;
+    const notes = classroomEl("lesson-notes-input").value;
+    saveLessonNotes(classroomSession.classId, notes).catch((err) => {
+      alert("Could not save notes: " + err.message);
+    });
+  });
+
+  classroomEl("lesson-file-input").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file || !classroomSession) return;
+    const progressEl = classroomEl("lesson-upload-progress");
+    progressEl.textContent = "Uploading… 0%";
+    try {
+      const fileMeta = await uploadLessonFile(classroomSession.classId, file, (pct) => {
+        progressEl.textContent = `Uploading… ${pct}%`;
+      });
+      await addLessonFile(classroomSession.classId, fileMeta);
+      progressEl.textContent = "";
+    } catch (err) {
+      progressEl.textContent = "";
+      alert("Could not upload file: " + err.message);
+    }
+  });
 }
 
 function initClassroom() {

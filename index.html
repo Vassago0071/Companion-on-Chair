@@ -186,6 +186,17 @@
         <button class="ctrl-btn danger" id="btn-stop-class-timer">Stop</button>
       </div>
     </div>
+    <div class="lesson-panel">
+      <span class="control-label">Lesson Materials</span>
+      <textarea id="lesson-notes-input" class="lesson-notes-input" rows="3" placeholder="Notes or homework for today..."></textarea>
+      <button class="ctrl-btn" id="btn-save-lesson-notes">Save Notes</button>
+      <div id="teacher-lesson-files" class="lesson-files-list"></div>
+      <label class="file-upload-label">
+        <input type="file" id="lesson-file-input" accept=".ppt,.pptx,.pdf,.doc,.docx,.png,.jpg,.jpeg,.txt" hidden />
+        <span class="ctrl-btn primary">📎 Upload File</span>
+      </label>
+      <div id="lesson-upload-progress" class="lesson-upload-progress"></div>
+    </div>
     <div id="teacher-roster" class="roster-grid"></div>
     <div class="teacher-dashboard-actions">
       <button class="ctrl-btn" id="teacher-back-to-classes">← My Classes</button>
@@ -200,6 +211,11 @@
     <div class="student-points-banner">
       <span>Your points: <strong id="student-points">0</strong> 🏅</span>
       <button class="ctrl-btn primary" id="student-open-shop">Class Shop</button>
+    </div>
+    <div class="lesson-panel student-lesson-panel" id="student-lesson-panel">
+      <span class="control-label">📚 Lesson Materials</span>
+      <p id="student-lesson-notes" class="lesson-notes-display"></p>
+      <div id="student-lesson-files" class="lesson-files-list"></div>
     </div>
     <p class="subtitle">Whole class leaderboard — updates live.</p>
     <div id="student-roster" class="roster-grid"></div>
@@ -280,6 +296,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/classroom.js"></script>
 </body>

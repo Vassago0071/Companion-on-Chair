@@ -1045,3 +1045,89 @@ body {
   margin-bottom: 10px;
   min-height: 1.4em;
 }
+
+/* ----------------------------- lesson materials ---------------------------- */
+.lesson-panel {
+  max-width: 480px;
+  margin: 0 auto 20px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 14px var(--shadow);
+  text-align: center;
+}
+
+.lesson-notes-input {
+  width: 100%;
+  border: 2px solid var(--cream-2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+  margin: 8px 0;
+  box-sizing: border-box;
+}
+
+.lesson-notes-display {
+  white-space: pre-wrap;
+  color: var(--brown);
+  font-size: 0.95rem;
+  margin: 8px 0;
+}
+
+.lesson-files-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.lesson-file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--cream-2);
+  border-radius: 10px;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.lesson-file-row a {
+  color: var(--brown);
+  font-weight: 600;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lesson-file-row a:hover {
+  text-decoration: underline;
+}
+
+.file-remove-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--danger);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.file-upload-label {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.lesson-upload-progress {
+  font-size: 0.85rem;
+  color: #8a7360;
+  margin-top: 8px;
+  min-height: 1.2em;
+}
+
+.student-lesson-panel {
+  max-width: 600px;
+}

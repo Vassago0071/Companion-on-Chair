@@ -1,21 +1,27 @@
 /* Firebase project config for Classroom Mode.
  *
- * Classroom Mode (teacher-hosted sessions, live points, class leaderboard)
- * needs a real backend to sync state across different students' devices —
- * this app uses Firebase (Firestore + Anonymous Auth) for that. Without a
- * configured project, Classroom Mode shows a setup notice instead of
- * connecting; everything else in the app works exactly as before.
+ * Classroom Mode (teacher-hosted sessions, live points, class leaderboard,
+ * shared lesson materials) needs a real backend to sync state across
+ * different students' devices — this app uses Firebase (Firestore, Google
+ * + Anonymous Auth, and Storage) for that. Without a configured project,
+ * Classroom Mode shows a setup notice instead of connecting; everything
+ * else in the app works exactly as before.
  *
  * One-time setup (free tier is enough for a classroom):
  *   1. Go to https://console.firebase.google.com and create a project.
  *   2. Build → Firestore Database → Create database (start in production
  *      mode — the rules below lock it down).
- *   3. Build → Authentication → Sign-in method → enable "Anonymous".
- *   4. Project settings (gear icon) → General → "Your apps" → Add app →
+ *   3. Build → Authentication → Sign-in method → enable both "Google" and
+ *      "Anonymous".
+ *   4. Build → Storage → Get started (production mode — again locked down
+ *      by the rules below). Needed for teachers uploading lesson files.
+ *   5. Project settings (gear icon) → General → "Your apps" → Add app →
  *      Web (</>) → register it → copy the firebaseConfig object it gives
  *      you into FIREBASE_CONFIG below.
- *   5. Firestore Database → Rules → paste in the contents of
+ *   6. Firestore Database → Rules → paste in the contents of
  *      firestore.rules (at the repo root) → Publish.
+ *   7. Storage → Rules → paste in the contents of storage.rules (at the
+ *      repo root) → Publish.
  *
  * See the README's "Classroom Mode" section for more detail.
  */

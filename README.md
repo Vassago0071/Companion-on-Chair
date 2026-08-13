@@ -47,9 +47,12 @@ python3 -m http.server 8000
   a **class-scoped shop** — separate from their personal fish/decor — so
   purchases only ever apply within that teacher's class. Each class also has
   a **room theme** (a few preset background palettes the teacher picks, seen
-  live by every student) and a **class timer** — a shared Pomodoro countdown
+  live by every student), a **class timer** — a shared Pomodoro countdown
   that lives in Firestore, not in the teacher's browser, so it keeps running
-  for students exactly the same whether or not the teacher's tab stays open.
+  for students exactly the same whether or not the teacher's tab stays open
+  — and **Lesson Materials**: the teacher can type notes/homework and upload
+  files (PPTs, PDFs, images, docs) that every student sees live on their
+  dashboard, with a direct download link for each file.
   Requires a Firebase project to sync across devices; see "Classroom Mode
   setup" below.
 - Everything else persists in `localStorage` — no backend required.
@@ -67,9 +70,12 @@ python3 -m http.server 8000
 - `js/firebase-config.js` — where you paste your own Firebase project's
   config to enable Classroom Mode (placeholder by default).
 - `js/classroom.js` — Classroom Mode: Firebase glue (auth, Firestore
-  reads/writes/listeners) plus the teacher/student dashboard UI.
+  reads/writes/listeners, Storage uploads) plus the teacher/student
+  dashboard UI.
 - `firestore.rules` — reference Firestore security rules for Classroom Mode;
   paste into your Firebase project's Firestore → Rules tab.
+- `storage.rules` — reference Storage security rules for Lesson Materials
+  file uploads; paste into your Firebase project's Storage → Rules tab.
 
 ## Classroom Mode setup
 
