@@ -309,6 +309,10 @@ async function endClassInFirestore(classId) {
   await db.collection("classes").doc(classId).update({ active: false });
 }
 
+async function reopenClassInFirestore(classId) {
+  await db.collection("classes").doc(classId).update({ active: true });
+}
+
 function listenToClassDoc(classId, callback) {
   return db
     .collection("classes")
@@ -385,6 +389,14 @@ async function removeLessonFile(classId, fileMeta) {
   } catch (err) {
     /* file already gone or storage unreachable — the Firestore removal above still succeeded */
   }
+}
+
+/* Students can't see lesson materials until the teacher explicitly opens
+ * them for the class -- keeps last class's homework from leaking into the
+ * next one and gives the teacher a deliberate "go" moment. */
+async function setLessonOpen(classId, open) {
+  const merged = { notes: "", files: [], ...currentLessonData, open };
+  await db.collection("classes").doc(classId).update({ lesson: merged });
 }
 
 async function listMyClasses() {
@@ -572,12 +584,13 @@ function renderTeacherProfileBust(containerId, nameContainerId, profile) {
   }
   const avatar = getTeacherAvatar(profile.avatarId);
   wrap.innerHTML = teacherSVG(avatar, profile);
-  if (nameContainerId) classroomEl(nameContainerId).textContent = avatar.name;
+  if (nameContainerId) classroomEl(nameContainerId).textContent = profile.displayName || avatar.name;
 }
 
 function openTeacherAvatarModal(classId, currentProfile) {
   editingTeacherProfileClassId = classId;
   editingTeacherProfile = { ...loadTeacherProfile(), ...(currentProfile || {}) };
+  classroomEl("teacher-avatar-name").value = editingTeacherProfile.displayName || "";
   renderTeacherAvatarPicker();
   openModal("modal-teacher-avatar");
 }
@@ -588,10 +601,21 @@ function renderTeacherAvatarPicker() {
   TEACHER_AVATARS.forEach((t) => {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "teacher-avatar-option" + (editingTeacherProfile.avatarId === t.id ? " active" : "");
-    btn.innerHTML = `${teacherSVG(t, editingTeacherProfile)}<span>${t.name}</span>`;
+    const isSelected = editingTeacherProfile.avatarId === t.id;
+    btn.className = "teacher-avatar-option" + (isSelected ? " active" : "");
+    // The selected card reflects the live-edited hairstyle; unselected
+    // cards preview with that character's own suggested default so, e.g.,
+    // Ms. Marlowe's card always shows long hair at a glance in the grid.
+    const previewCustom = isSelected
+      ? editingTeacherProfile
+      : { ...editingTeacherProfile, hairStyleId: t.defaultHairStyleId || editingTeacherProfile.hairStyleId };
+    btn.innerHTML = `${teacherSVG(t, previewCustom)}<span>${t.name}</span>`;
     btn.addEventListener("click", () => {
       editingTeacherProfile.avatarId = t.id;
+      // Switching character resets hair to that character's suggested
+      // style (e.g. long hair for the female-coded characters) so a first
+      // pick already looks distinct -- still freely changeable below.
+      editingTeacherProfile.hairStyleId = t.defaultHairStyleId || editingTeacherProfile.hairStyleId;
       renderTeacherAvatarPicker();
     });
     grid.appendChild(btn);
@@ -734,7 +758,17 @@ function renderTeacherLessonPanel(classId) {
     isTeacher: true,
     classId,
   });
+  const isOpen = !!(currentLessonData && currentLessonData.open);
+  const toggleBtn = classroomEl("btn-toggle-lesson-open");
+  toggleBtn.textContent = isOpen ? "🔒 Lock Lesson" : "🔓 Open Lesson to Class";
+  toggleBtn.classList.toggle("danger", isOpen);
+  toggleBtn.classList.toggle("primary", !isOpen);
 }
+
+/* Students can't see lesson materials until the teacher opens them (see
+ * setLessonOpen) -- the button stays disabled/grayed until then, and even
+ * once unlocked the student still has to click through to reveal it. */
+let lessonRevealed = false;
 
 function renderStudentLessonPanel(classId) {
   const notes = (currentLessonData && currentLessonData.notes) || "";
@@ -744,6 +778,12 @@ function renderStudentLessonPanel(classId) {
     isTeacher: false,
     classId,
   });
+  const isOpen = !!(currentLessonData && currentLessonData.open);
+  if (!isOpen) lessonRevealed = false;
+  const btn = classroomEl("btn-view-lesson");
+  btn.disabled = !isOpen;
+  btn.textContent = isOpen ? "📖 View Lesson" : "🔒 Lesson Locked";
+  classroomEl("student-lesson-content").classList.toggle("hidden", !lessonRevealed);
 }
 
 function openTeacherDashboard(classId, className, code) {
@@ -765,7 +805,9 @@ function openTeacherDashboard(classId, className, code) {
     currentLessonData = classData.lesson || { notes: "", files: [] };
     renderTeacherLessonPanel(classId);
     currentTeacherProfileData = classData.teacherProfile || null;
-    renderTeacherProfileBust("teacher-avatar-bust", null, currentTeacherProfileData);
+    renderTeacherProfileBust("teacher-avatar-bust", "teacher-avatar-name-display", currentTeacherProfileData);
+    classroomEl("teacher-end-class").classList.toggle("hidden", classData.active === false);
+    classroomEl("teacher-reopen-class").classList.toggle("hidden", classData.active !== false);
   });
   startClassTimerTicking();
 }
@@ -1063,6 +1105,15 @@ function wireClassroomEvents() {
     openMyClasses();
   });
 
+  classroomEl("teacher-reopen-class").addEventListener("click", async () => {
+    if (!classroomSession) return;
+    try {
+      await reopenClassInFirestore(classroomSession.classId);
+    } catch (err) {
+      alert("Could not reopen class: " + err.message);
+    }
+  });
+
   classroomEl("student-leave-class").addEventListener("click", () => {
     if (rosterUnsubscribe) rosterUnsubscribe();
     if (classDocUnsubscribe) classDocUnsubscribe();
@@ -1094,6 +1145,9 @@ function wireClassroomEvents() {
     openTeacherAvatarModal(classroomSession.classId, currentTeacherProfileData);
   });
   classroomEl("teacher-avatar-close").addEventListener("click", () => closeModal("modal-teacher-avatar"));
+  classroomEl("teacher-avatar-name").addEventListener("input", (e) => {
+    if (editingTeacherProfile) editingTeacherProfile.displayName = e.target.value;
+  });
   classroomEl("teacher-avatar-save").addEventListener("click", () => {
     updateTeacherProfileOnClass(editingTeacherProfileClassId, editingTeacherProfile).catch((err) => {
       alert("Could not save your avatar: " + err.message);
@@ -1107,6 +1161,19 @@ function wireClassroomEvents() {
     saveLessonNotes(classroomSession.classId, notes).catch((err) => {
       alert("Could not save notes: " + err.message);
     });
+  });
+
+  classroomEl("btn-toggle-lesson-open").addEventListener("click", () => {
+    if (!classroomSession) return;
+    const isOpen = !!(currentLessonData && currentLessonData.open);
+    setLessonOpen(classroomSession.classId, !isOpen).catch((err) => {
+      alert("Could not update the lesson: " + err.message);
+    });
+  });
+
+  classroomEl("btn-view-lesson").addEventListener("click", () => {
+    lessonRevealed = true;
+    classroomEl("student-lesson-content").classList.remove("hidden");
   });
 
   classroomEl("lesson-file-input").addEventListener("change", async (e) => {

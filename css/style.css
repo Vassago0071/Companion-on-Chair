@@ -1015,7 +1015,8 @@ body {
   color: var(--danger);
 }
 
-#score-bonus-form input {
+#score-bonus-form input,
+#teacher-avatar-name {
   width: 100%;
   border: 2px solid var(--cream-2);
   border-radius: 12px;

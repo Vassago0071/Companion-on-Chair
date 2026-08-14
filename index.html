@@ -171,6 +171,7 @@
     <h1 id="teacher-class-name">Class</h1>
     <div class="teacher-avatar-widget">
       <div class="teacher-avatar-bust" id="teacher-avatar-bust"></div>
+      <strong id="teacher-avatar-name-display"></strong>
       <button class="ctrl-btn" id="btn-change-teacher-avatar">Change My Avatar</button>
     </div>
     <p class="subtitle">Share this code with your students:</p>
@@ -207,11 +208,13 @@
         <span class="ctrl-btn primary">📎 Upload File</span>
       </label>
       <div id="lesson-upload-progress" class="lesson-upload-progress"></div>
+      <button class="ctrl-btn primary" id="btn-toggle-lesson-open">🔓 Open Lesson to Class</button>
     </div>
     <div id="teacher-roster" class="roster-grid"></div>
     <div class="teacher-dashboard-actions">
       <button class="ctrl-btn" id="teacher-back-to-classes">← My Classes</button>
       <button class="ctrl-btn danger" id="teacher-end-class">Close to New Joins</button>
+      <button class="ctrl-btn primary hidden" id="teacher-reopen-class">Reopen to New Joins</button>
     </div>
   </section>
 
@@ -229,8 +232,11 @@
     </div>
     <div class="lesson-panel student-lesson-panel" id="student-lesson-panel">
       <span class="control-label">📚 Lesson Materials</span>
-      <p id="student-lesson-notes" class="lesson-notes-display"></p>
-      <div id="student-lesson-files" class="lesson-files-list"></div>
+      <button class="ctrl-btn primary" id="btn-view-lesson" disabled>🔒 Lesson Locked</button>
+      <div id="student-lesson-content" class="hidden">
+        <p id="student-lesson-notes" class="lesson-notes-display"></p>
+        <div id="student-lesson-files" class="lesson-files-list"></div>
+      </div>
     </div>
     <p class="subtitle">Whole class leaderboard — updates live.</p>
     <div id="student-roster" class="roster-grid"></div>
@@ -346,6 +352,10 @@
     </div>
     <p class="subtitle">Shown to your students on their class dashboard.</p>
     <div class="teacher-avatar-preview" id="teacher-avatar-preview"></div>
+    <div class="control-group">
+      <span class="control-label">Your Name</span>
+      <input type="text" id="teacher-avatar-name" placeholder="e.g. Mrs. Johnson" maxlength="40" />
+    </div>
     <div class="teacher-avatar-grid" id="teacher-avatar-grid"></div>
     <div class="control-group">
       <span class="control-label">Age</span>

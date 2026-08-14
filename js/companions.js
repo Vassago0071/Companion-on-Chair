@@ -907,24 +907,28 @@ const TEACHER_AVATARS = [
     name: "Mr. Alden",
     gender: "male",
     colors: { blazer: "#2b3a55", accent: "#c9432f" },
+    defaultHairStyleId: "short-neat",
   },
   {
     id: "teacher-osei",
     name: "Mr. Osei",
     gender: "male",
     colors: { blazer: "#4a2f1c", accent: "#3a7bd5" },
+    defaultHairStyleId: "clean-cut",
   },
   {
     id: "teacher-marlowe",
     name: "Ms. Marlowe",
     gender: "female",
     colors: { blazer: "#6b2f4a", accent: "#c9432f" },
+    defaultHairStyleId: "long",
   },
   {
     id: "teacher-quintero",
     name: "Ms. Quintero",
     gender: "female",
     colors: { blazer: "#2f5c4a", accent: "#e8c873" },
+    defaultHairStyleId: "long",
   },
 ];
 
@@ -976,10 +980,24 @@ const TEACHER_HAIR_STYLES = [
     render: (c) =>
       `<path class="ol" d="M60 74 Q62 64 72 60 M140 74 Q138 64 128 60" stroke="${c}" stroke-width="7" fill="none" stroke-linecap="round"/>`,
   },
+  {
+    id: "long",
+    label: "Long & Flowing",
+    render: (c) =>
+      `<path class="ol" d="M56 78 Q56 32 100 30 Q144 32 144 78 Q144 58 100 54 Q56 58 56 78 Z" fill="${c}"/>` +
+      `<path class="ol" d="M54 68 Q44 112 58 152 L76 152 Q64 110 70 70 Z" fill="${c}"/>` +
+      `<path class="ol" d="M146 68 Q156 112 142 152 L124 152 Q136 110 130 70 Z" fill="${c}"/>`,
+  },
 ];
 
-function defaultTeacherCustomization() {
-  return { ageId: "adult", hairStyleId: "short-neat", hairColorId: "brown", skinToneId: "medium" };
+function defaultTeacherCustomization(avatarId) {
+  const avatar = avatarId ? getTeacherAvatar(avatarId) : null;
+  return {
+    ageId: "adult",
+    hairStyleId: (avatar && avatar.defaultHairStyleId) || "short-neat",
+    hairColorId: "brown",
+    skinToneId: "medium",
+  };
 }
 
 /** Renders a teacher's portrait bust. custom: see defaultTeacherCustomization(). */
