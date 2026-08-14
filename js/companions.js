@@ -243,7 +243,11 @@ const ACCESSORY_CATALOG = [
     icon: "🌟",
     price: 8,
     render: () =>
-      `<g class="glasses" style="stroke:#e8788a"><circle cx="122" cy="88" r="15"/><circle cx="158" cy="88" r="15"/><line x1="137" y1="86" x2="143" y2="86"/></g>`,
+      // Color is set on each child directly, not the wrapping <g> -- the
+      // .glasses CSS rule targets circle/line elements by their own
+      // specificity, which beats a color inherited from a parent's
+      // inline style, so a parent-level override is silently ignored.
+      `<g class="glasses"><circle cx="122" cy="88" r="15" style="stroke:#e8788a"/><circle cx="158" cy="88" r="15" style="stroke:#e8788a"/><line x1="137" y1="86" x2="143" y2="86" style="stroke:#e8788a"/></g>`,
   },
   {
     id: "glasses-sunglasses",
@@ -262,7 +266,7 @@ const ACCESSORY_CATALOG = [
     name: "Gold Hoop",
     icon: "💍",
     price: 5,
-    render: () => `<circle class="ol" cx="106" cy="100" r="6" fill="none" stroke="#e8c873" stroke-width="3"/>`,
+    render: () => `<circle cx="105" cy="102" r="9" fill="none" stroke="#e8c873" stroke-width="5"/>`,
   },
   {
     id: "hairclip-bow",
@@ -796,7 +800,10 @@ function avatarSVG(companion, state, custom) {
   const pupilColor = eyecolorItem ? eyecolorItem.eyeColor : "#18110b";
   const headAccessories = equipped
     .filter((a) => a.zone === "head" && a.slot !== "haircut")
-    .map((a) => a.render())
+    // Hat coordinates in ACCESSORY_CATALOG assume the animal head (top edge
+    // y=40); the avatar head rect sits lower (top edge y=58), so hats need
+    // an 18px nudge down here or they float above the avatar's head.
+    .map((a) => (a.slot === "hat" ? `<g transform="translate(0 18)">${a.render()}</g>` : a.render()))
     .join("");
   const torsoAccessories = equipped
     .filter((a) => a.zone === "torso")

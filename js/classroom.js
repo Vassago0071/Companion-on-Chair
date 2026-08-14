@@ -438,11 +438,20 @@ function renderRoster(containerId, students, { highlightUid, isTeacher, classId 
     const companion = getCompanion(s.companionId);
     const artCustom = { ...s.customization, accessories: s.equippedAccessories || {} };
     const canViewScores = isTeacher || s.uid === highlightUid;
+    const decorBadges = (s.ownedDecor || [])
+      .map((id) => {
+        const item = DECOR.find((d) => d.id === id);
+        return item ? `<span class="decor-badge" title="${item.name}">${item.icon}</span>` : "";
+      })
+      .join("");
     const card = document.createElement("div");
     card.className = "roster-card" + (s.uid === highlightUid ? " me" : "");
     card.innerHTML = `
       <div class="roster-rank">#${idx + 1}</div>
-      <div class="roster-art">${renderCompanionArt(companion, "idle", artCustom)}</div>
+      <div class="roster-art">
+        ${decorBadges ? `<div class="roster-decor">${decorBadges}</div>` : ""}
+        ${renderCompanionArt(companion, "idle", artCustom)}
+      </div>
       <div class="roster-name">${escapeHTML(s.name || "Student")}</div>
       <div class="roster-points">${s.points || 0} 🏅</div>
       ${canViewScores ? `<button class="ctrl-btn score-open-btn">📊 ${isTeacher ? "Scores" : "My Scores"}</button>` : ""}
@@ -843,34 +852,32 @@ function renderClassAccessoriesShop(classId, myUid) {
       <div class="shop-icon">${item.icon}</div>
       <div class="shop-name">${item.name}</div>
       <div class="shop-price">${isOwned ? (isEquipped ? "Equipped" : "Owned") : `🏅 ${item.price}`}</div>
-      <button class="ctrl-btn ${isOwned && !isEquipped ? "primary" : ""}" ${isEquipped ? "disabled" : ""}>${
-      isOwned ? (isEquipped ? "Equipped" : "Wear") : "Buy"
+      <button class="ctrl-btn ${isEquipped ? "danger" : "primary"}">${
+      isOwned ? (isEquipped ? "Unequip" : "Wear") : "Buy"
     }</button>
     `;
     const btn = card.querySelector("button");
-    if (!isEquipped) {
-      btn.addEventListener("click", async () => {
-        try {
-          const cached = studentRosterCache.find((s) => s.uid === myUid);
-          if (isOwned) {
-            const result = await equipAccessory(classId, myUid, item);
-            if (cached) cached.equippedAccessories = result.equippedAccessories;
-          } else {
-            const result = await buyClassAccessory(classId, myUid, item);
-            if (cached) {
-              cached.points = result.points;
-              cached.ownedAccessories = result.ownedAccessories;
-              cached.equippedAccessories = result.equippedAccessories;
-            }
-            classroomEl("student-points").textContent = result.points;
+    btn.addEventListener("click", async () => {
+      try {
+        const cached = studentRosterCache.find((s) => s.uid === myUid);
+        if (isOwned) {
+          const result = await equipAccessory(classId, myUid, item);
+          if (cached) cached.equippedAccessories = result.equippedAccessories;
+        } else {
+          const result = await buyClassAccessory(classId, myUid, item);
+          if (cached) {
+            cached.points = result.points;
+            cached.ownedAccessories = result.ownedAccessories;
+            cached.equippedAccessories = result.equippedAccessories;
           }
-          renderClassAccessoriesShop(classId, myUid);
-          renderRoster("student-roster", studentRosterCache, { highlightUid: myUid });
-        } catch (err) {
-          alert(err.message === "not-enough-points" ? "Not enough class points yet." : "Could not do that.");
+          classroomEl("student-points").textContent = result.points;
         }
-      });
-    }
+        renderClassAccessoriesShop(classId, myUid);
+        renderRoster("student-roster", studentRosterCache, { highlightUid: myUid });
+      } catch (err) {
+        alert(err.message === "not-enough-points" ? "Not enough class points yet." : "Could not do that.");
+      }
+    });
     grid.appendChild(card);
   });
 }

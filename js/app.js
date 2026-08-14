@@ -445,11 +445,11 @@ function renderShopAccessories() {
       <div class="shop-icon">${item.icon}</div>
       <div class="shop-name">${item.name}</div>
       <div class="shop-price">${isOwned ? (isEquipped ? "Equipped" : "Owned") : `🐟 ${item.price}`}</div>
-      <button class="ctrl-btn ${isOwned && !isEquipped ? "primary" : ""}" ${
-      isEquipped || !state.companionId ? "disabled" : ""
-    }>${isOwned ? (isEquipped ? "Equipped" : "Wear") : "Buy"}</button>
+      <button class="ctrl-btn ${isEquipped ? "danger" : "primary"}" ${!state.companionId ? "disabled" : ""}>${
+      isOwned ? (isEquipped ? "Unequip" : "Wear") : "Buy"
+    }</button>
     `;
-    if (!isEquipped && state.companionId) {
+    if (state.companionId) {
       card.querySelector("button").addEventListener("click", () => buyOrEquipAccessory(item));
     }
     grid.appendChild(card);
@@ -458,14 +458,21 @@ function renderShopAccessories() {
 
 function buyOrEquipAccessory(item) {
   const owned = state.ownedAccessories || [];
-  if (!owned.includes(item.id)) {
+  const alreadyOwned = owned.includes(item.id);
+  if (!alreadyOwned) {
     if (state.fish < item.price) return;
     state.fish -= item.price;
     owned.push(item.id);
     state.ownedAccessories = owned;
   }
   const merged = getCustomization(state.companionId);
-  merged.accessories = { ...merged.accessories, [item.slot]: item.id };
+  const isEquipped = merged.accessories[item.slot] === item.id;
+  merged.accessories = { ...merged.accessories };
+  if (alreadyOwned && isEquipped) {
+    delete merged.accessories[item.slot];
+  } else {
+    merged.accessories[item.slot] = item.id;
+  }
   state.customizations[state.companionId] = merged;
   saveState();
   renderTopbar();
