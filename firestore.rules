@@ -10,11 +10,13 @@ rules_version = '2';
 //   - Only the authenticated user who created a class (its teacherUid) can
 //     create it, update it (e.g. end the session), or edit any student's
 //     points within it.
-//   - A student can only ever create/update their OWN roster entry, and a
-//     student-authored update can never increase their own points, touch
-//     their own scores (the six teacher-scored bars) or bonus history, or
-//     shrink their purchase history (points only move up via the teacher,
-//     or down via a class-shop purchase).
+//   - A student can only ever create/update their OWN roster entry (or the
+//     teacher can create/update any entry, including manually-added
+//     students who have no device of their own), and a student-authored
+//     update can never increase their own points, touch their own scores
+//     (the six teacher-scored bars) or bonus history, or shrink their
+//     purchase history (points only move up via the teacher, or down via a
+//     class-shop purchase).
 //
 // Known limitation: Firestore rules can't fully validate that a student's
 // purchase matches a real shop item's price -- a determined user could craft
@@ -35,7 +37,13 @@ service cloud.firestore {
 
       match /students/{studentUid} {
         allow read: if true;
-        allow create: if request.auth != null && request.auth.uid == studentUid;
+        allow create: if request.auth != null && (
+          request.auth.uid == studentUid ||
+          // The teacher can also add a roster entry directly, for students
+          // without their own device to join with -- its id is a generated
+          // placeholder, not a real auth uid.
+          get(/databases/$(database)/documents/classes/$(classId)).data.teacherUid == request.auth.uid
+        );
         allow update: if request.auth != null && (
           // The teacher can freely update any student (awarding/removing points).
           get(/databases/$(database)/documents/classes/$(classId)).data.teacherUid == request.auth.uid

@@ -76,6 +76,10 @@ python3 -m http.server 8000
   age, hair style, hair color, and skin color options, shown to students as
   "Hosted by ..." on their class dashboard. The choice carries forward as
   the default for the next class hosted.
+  For students without a device of their own, the teacher can add them
+  directly from the dashboard with just a name -- they get a random
+  companion and appear on the leaderboard like anyone else, scored the
+  same way.
   Requires a Firebase project to sync across devices; see "Classroom Mode
   setup" below.
 - Everything else persists in `localStorage` — no backend required.

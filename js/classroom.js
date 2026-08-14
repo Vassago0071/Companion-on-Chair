@@ -217,6 +217,36 @@ async function joinClassInFirestore(classId, displayName) {
   return uid;
 }
 
+/* Lets a teacher add a roster entry directly for a student with no device
+ * or phone of their own to join with. The id is a generated placeholder,
+ * not a real Firebase Auth uid -- these students can't sign in as
+ * themselves, but the teacher can score them and they appear on the
+ * leaderboard like anyone else. Gives them a random companion so they have
+ * a visual identity without needing anyone to pick one. */
+async function addManualStudent(classId, displayName) {
+  const uid = "manual-" + Math.random().toString(36).slice(2, 10);
+  const companion = ALL_COMPANIONS[Math.floor(Math.random() * ALL_COMPANIONS.length)];
+  await db
+    .collection("classes")
+    .doc(classId)
+    .collection("students")
+    .doc(uid)
+    .set({
+      name: displayName,
+      companionId: companion.id,
+      customization: defaultCustomization(),
+      manual: true,
+      points: 0,
+      scores: emptyScores(),
+      bonusLog: [],
+      ownedDecor: [],
+      ownedAccessories: [],
+      equippedAccessories: {},
+      joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+  return uid;
+}
+
 function listenToRoster(classId, callback) {
   return db
     .collection("classes")
@@ -464,7 +494,9 @@ function renderRoster(containerId, students, { highlightUid, isTeacher, classId 
         ${decorBadges ? `<div class="roster-decor">${decorBadges}</div>` : ""}
         ${renderCompanionArt(companion, "idle", artCustom)}
       </div>
-      <div class="roster-name">${escapeHTML(s.name || "Student")}</div>
+      <div class="roster-name">${escapeHTML(s.name || "Student")}${
+      s.manual && isTeacher ? ' <span class="roster-manual-tag" title="Added by teacher">🖐️</span>' : ""
+    }</div>
       <div class="roster-points">${s.points || 0} 🏅</div>
       ${canViewScores ? `<button class="ctrl-btn score-open-btn">📊 ${isTeacher ? "Scores" : "My Scores"}</button>` : ""}
     `;
@@ -1174,6 +1206,20 @@ function wireClassroomEvents() {
   classroomEl("btn-view-lesson").addEventListener("click", () => {
     lessonRevealed = true;
     classroomEl("student-lesson-content").classList.remove("hidden");
+  });
+
+  classroomEl("add-student-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!classroomSession) return;
+    const input = classroomEl("add-student-name");
+    const name = input.value.trim();
+    if (!name) return;
+    try {
+      await addManualStudent(classroomSession.classId, name);
+      input.value = "";
+    } catch (err) {
+      alert("Could not add student: " + err.message);
+    }
   });
 
   classroomEl("lesson-file-input").addEventListener("change", async (e) => {
