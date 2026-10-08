@@ -131,6 +131,7 @@ their one known limitation (purchase amounts aren't validated
 server-side without a Cloud Function — fine for a classroom-trust setting).
 
 ## Notes
+Still need help with the shop items and general look.. HELP if you have time.. 
 
 The companion illustrations and "Companion on Chair" branding here are
 original to this project. The bold-outline, flat-cutout look is a general
